@@ -4139,7 +4139,7 @@ do
 			if self:hasmultret(e.k) then
 				luaK:setmultret(fs, e)
 				if e.k == "VCALL" and nret == 1 then  -- tail call?
-					luaP:SET_OPCODE(luaK:getcode(fs, e), "OP_TAILCALL")
+					luaP:SET_OPCODE(luaK:getcode(fs, e), "OP_CALL") -- roblox doesnt like OP_TAILCALL (security thing)
 					lua_assert(luaP:GETARG_A(luaK:getcode(fs, e)) == fs.nactvar)
 				end
 				first = fs.nactvar
