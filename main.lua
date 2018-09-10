@@ -1,0 +1,79 @@
+local code = [[
+    local _ = 1, 1 or (function()
+        
+    end)()
+]]
+
+local compiler = require("compiler")
+local proto = compiler.compile_to_proto(code, "=lumida")
+
+function obufscate_proto(pr)
+    local function process_proto(p)
+        
+        -- fucking with op_jmp and op_forprep
+        --table.insert(p.k, { value = 0})
+        --p.sizek = p.sizek + 1
+        --p.maxstacksize = p.maxstacksize + 10
+        
+        --p.sizelineinfo = 0
+        p.sizeupvalues = 0
+        p.sizelocvars = 0
+        
+
+
+        p.sizelineinfo = p.sizecode
+        local new_lineinfo = {}
+        for i = 1, p.sizelineinfo do
+            new_lineinfo[i - 1] = math.random(1, 9999)
+        end
+        p.lineinfo = new_lineinfo
+
+
+        for i = 0, p.sizep - 1 do
+            process_proto(p.p[i])
+        end
+    end
+    process_proto(pr)
+end
+
+obufscate_proto(proto)
+
+function table_print (tt, indent, done)
+    done = done or {}
+    indent = indent or 0
+    if type(tt) == "table" then
+        for key, value in pairs (tt) do
+            io.write(string.rep (" ", indent)) -- indent it
+            if type (value) == "table" and not done [value] then
+                done [value] = true
+                io.write(string.format("[%s] => table\n", tostring (key)));
+                io.write(string.rep (" ", indent+4)) -- indent it
+                io.write("(\n");
+                table_print (value, indent + 7, done)
+                io.write(string.rep (" ", indent+4)) -- indent it
+                io.write(")\n");
+            else
+                io.write(string.format("[%s] => %s\n",
+                tostring (key), tostring(value)))
+            end
+        end
+    else
+        io.write(tt .. "\n")
+    end
+end
+
+table_print(proto)
+
+local bc = compiler.compile_proto(proto)
+print(bc)
+
+local f = io.open("output.luac", "wb")
+f:write(bc)
+f:close()
+
+local built = ""
+for i=1, #bc do
+    built = built .. "\\" .. string.byte(bc, i)
+end
+print(built)
+print(loadstring(bc))
