@@ -7,7 +7,7 @@ local code = [[
 local compiler = require("compiler")
 local proto = compiler.compile_to_proto(code, "=lumida")
 
-function obufscate_proto(pr)
+local function obfuscate_proto(pr)
     local function process_proto(p)
         
         -- fucking with op_jmp and op_forprep
@@ -36,9 +36,9 @@ function obufscate_proto(pr)
     process_proto(pr)
 end
 
-obufscate_proto(proto)
+obfuscate_proto(proto)
 
-function table_print (tt, indent, done)
+local function table_print(tt, indent, done)
     done = done or {}
     indent = indent or 0
     if type(tt) == "table" then
