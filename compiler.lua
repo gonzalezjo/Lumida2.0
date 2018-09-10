@@ -3073,7 +3073,9 @@ do
 		self:removevars(fs.ls, bl.nactvar)
 		if bl.upval then
 			luaK:codeABC(fs, "OP_CLOSE", bl.nactvar, 0, 0)
-			luaK:codeABC(fs, "OP_CLOSE", bl.nactvar, 0, 0)
+			if not _G.regular_lua then
+				luaK:codeABC(fs, "OP_CLOSE", bl.nactvar, 0, 0)
+			end
 		end
 		-- a block either controls scope or breaks (never both)
 		lua_assert(not bl.isbreakable or not bl.upval)
@@ -3098,7 +3100,13 @@ do
 		-- luaC_objbarrier(ls->L, f, func->f); /* C */
 		self:init_exp(v, "VRELOCABLE", luaK:codeABx(fs, "OP_CLOSURE", 0, fs.np - 1))
 		for i = 0, func.f.nups - 1 do
-			local o = (func.upvalues[i].k == "VLOCAL") and "OP_ADD" or "OP_SUB"
+			local o
+			if _G.regular_lua then
+				o = (func.upvalues[i].k == "VLOCAL") and "OP_MOVE" or "OP_GETUPVAL"
+			else
+				o = (func.upvalues[i].k == "VLOCAL") and "OP_ADD" or "OP_SUB"
+			end
+			--local o = (func.upvalues[i].k == "VLOCAL") and "OP_ADD" or "OP_SUB"
 			luaK:codeABC(fs, o, 0, func.upvalues[i].info, 0)
 		end
 	end
@@ -3825,7 +3833,9 @@ do
 		end
 		if upval then
 			luaK:codeABC(fs, "OP_CLOSE", bl.nactvar, 0, 0)
-			luaK:codeABC(fs, "OP_CLOSE", bl.nactvar, 0, 0)
+			if not _G.regular_lua then
+				luaK:codeABC(fs, "OP_CLOSE", bl.nactvar, 0, 0)
+			end
 		end
 		bl.breaklist = luaK:concat(fs, bl.breaklist, luaK:jump(fs))
 	end
