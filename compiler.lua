@@ -1365,6 +1365,7 @@ do
 		self:DumpInt(n, D)
 		for i = 0, n - 1 do
 			local o = f.k[i]  -- TValue
+			print(o, type(o))
 			local tt = self:ttype(o)
 			self:DumpChar(tt, D)
 			if tt == self.LUA_TNIL then
