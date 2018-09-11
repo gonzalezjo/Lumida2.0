@@ -67,6 +67,8 @@ do
 
       source = obfuscators.ast[v](output, verbose)
     end
+  elseif arguments.verbose then 
+    print 'Skipping AST transformations.'
   end 
 
   assert(source and loadstring(source), 'Invalid AST transformations.')
@@ -101,6 +103,8 @@ do
 
       source = 'loadstring(' .. table.concat(dump, '\\') .. ')()'
     end
+  elseif arguments.verbose then  
+    print 'Skipping bytecode mutations.'
   end
 end
 
