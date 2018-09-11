@@ -86,7 +86,7 @@ local function obfuscate_proto(pr)
 end
 
 return function(proto, verbose)
-  local table_print = require 'lib/table_print.lua' -- for ~~smashing~~ printing the protos
+  local table_print = require 'lib/table_print' -- for ~~smashing~~ printing the protos
 
   obfuscate_proto(proto)
 

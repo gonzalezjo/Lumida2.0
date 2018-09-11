@@ -3,10 +3,10 @@ do
 end
 
 local transformations = {
-  string_comparison = assert(require 'transformations/constant_string_comparison.lua'),
-  numerals = assert(require 'transformations/numerals.lua'), 
-  string_encryption = assert(require 'transformations/string_encryption.lua'),
-  string_splitting = assert(require 'transformations/string_splitting.lua'),
+  string_comparison = assert(require 'transformations/constant_string_comparison'),
+  numerals = assert(require 'transformations/numerals'), 
+  string_encryption = assert(require 'transformations/string_encryption'),
+  string_splitting = assert(require 'transformations/string_splitting'),
 } 
 
 return transformations

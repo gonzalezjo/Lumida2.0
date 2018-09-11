@@ -1,10 +1,10 @@
 local DEBUG_CODE = [[
-    local a
-    
-    local function b() 
-      local c = 1
-      print(a)
-    end
+local a
+
+local function b() 
+  local c = 1
+  print(a)
+end
 ]]
 
 local arguments 
@@ -20,19 +20,29 @@ do
   parser:flag('-V --verbose', 'Enable verbose logging.')
 
   parser:option('-t --transformations', 'Source code transformations.'):args('?')
-  parser:option('-m --mutations', 'Bytecode transformations.'):args('?')
+  parser:option('-m --mutations', 'Bytecode transformations.', 'forprep'):args('?')
   parser:flag('--no-mutations', 'Completely disable bytecode mutations.')
   parser:flag('--no-transformations', 'Completely disable AST transformations.')
   parser:flag('--pretty-bytecode', 'Return loadstring(...)() call.')
 
   arguments = parser:parse()
   _G.regular_lua = not arguments.roblox -- globals :\\\\/\/\/\//\/
+
+  if verbose then 
+    print('Arguments: ')
+    
+    for k, v in pairs(arguments) do 
+      print(k, v)
+    end
+
+    print('')
+  end 
 end
 
 local obfuscators = {}
 do 
-  obfuscators.ast = require 'transformations/transformations.lua'
-  obfuscators.bytecode = require 'mutations/mutations.lua'
+  obfuscators.ast = require 'transformations/transformations'
+  obfuscators.bytecode = require 'mutations/mutations'
 end
 
 local source
@@ -49,9 +59,11 @@ do
     #arguments.transformations > 0 then 
 
     for _, v in ipairs(arguments.transformations) do 
-      if not obfuscators.ast[v] then 
-        error('AST obfuscator ' .. v .. ' does not exist.')
-      end 
+      assert(obfuscators.bytecode[v], 'No AST transformer: ' .. v)
+
+      if arguments.verbose then 
+        print('Running source transformation: ' .. v)
+      end
 
       source = obfuscators.ast[v](output, verbose)
     end
@@ -60,18 +72,20 @@ do
   assert(source and loadstring(source), 'Invalid AST transformations.')
 
   if 
-    not arguments.no_mutations
+    not arguments.no_mutations and
     arguments.mutations and 
     #arguments.mutations > 0 then 
 
     local compiler 
-    compiler, _G.regular_lua = require 'compiler.lua', not arguments.roblox
+    compiler, _G.regular_lua = require 'compiler', not arguments.roblox
     source = compiler.compile_to_proto(source, '=lumida')
 
-    for _, v in ipairs(arguments.transformations) do 
-      if not obfuscators.bytecode[v] then 
-        error('Bytecode obfuscator ' .. v .. ' does not exist.')
-      end 
+    for _, v in ipairs(arguments.mutations) do 
+      assert(obfuscators.bytecode[v], 'No bytecode mutator: ' .. v)
+      
+      if arguments.verbose then 
+        print('Running bytecode mutation: ' .. v)
+      end
 
       source = obfuscators.bytecode[v](output, verbose)
     end
@@ -87,6 +101,7 @@ do
 
       source = 'loadstring(' .. table.concat(dump, '\\') .. ')()'
     end
+  end
 end
 
 do 
@@ -95,6 +110,9 @@ do
   f:close()
 
   if arguments.verbose then 
-    print('\nSource code: \n' .. tostring(source))
+    print(
+      '------------------\nOutput: \n------------------\n\n' 
+      .. tostring(source) .. 
+      '\n------------------')
   end
 end
