@@ -26,6 +26,7 @@ do
   parser:flag('--pretty-bytecode', 'Return loadstring(...)() call.')
 
   arguments = parser:parse()
+  _G.regular_lua = not arguments.roblox -- globals :\\\\/\/\/\//\/
 end
 
 local obfuscators = {}
@@ -36,8 +37,6 @@ end
 
 local source
 do 
-  _G.regular_lua = not arguments.roblox 
-
   source = arguments.debug and 
     DEBUG_CODE or 
     assert(io.open(arguments.input, 'r+b')):read('*a')
@@ -79,8 +78,9 @@ do
     source = compiler.compile_proto(proto)
     if arguments.pretty_bytecode then 
       local dump = {
-        source:byte(1, 9e9)
+        source:byte(1, 9e9) -- please do not write 9e9 + 1 instructions worth of code. 
       }
+      
       source = 'loadstring(' .. table.concat(dump, '\\') .. ')()'
     end
 end
