@@ -93,7 +93,7 @@ do
       source = obfuscators.bytecode[v](source, verbose)
     end
 
-    source = assert(compiler.compile_proto(proto), 'Failed to compile proto.')
+    source = assert(compiler.compile_proto(source), 'Failed to compile proto.')
 
     assert(loadstring(source), 'Invalid bytecode transformations.')
 
@@ -103,7 +103,7 @@ do
       }
 
       source = 'loadstring(' .. table.concat(dump, '\\') .. ')()'
-    end
+    end    
   elseif arguments.verbose then  
     print 'Skipping bytecode mutations.'
   end
