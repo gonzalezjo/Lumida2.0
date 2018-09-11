@@ -28,7 +28,7 @@ do
   arguments = parser:parse()
   _G.regular_lua = not arguments.roblox -- globals :\\\\/\/\/\//\/
 
-  if verbose then 
+  if arguments.verbose then 
     print('Arguments: ')
     
     for k, v in pairs(arguments) do 
@@ -115,7 +115,7 @@ do
 
   if arguments.verbose then 
     print(
-      '------------------\nOutput: \n------------------\n\n' 
+      '\n------------------\nOutput: \n------------------\n\n' 
       .. tostring(source) .. 
       '\n------------------')
   end
