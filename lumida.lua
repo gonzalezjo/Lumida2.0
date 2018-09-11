@@ -7,6 +7,12 @@ local function b()
 end
 ]]
 
+local obfuscators = {}
+do 
+  obfuscators.ast = require 'transformations/transformations'
+  obfuscators.bytecode = require 'mutations/mutations'
+end
+
 local arguments 
 do
   local argparse = require 'lib/argparse'
@@ -19,8 +25,9 @@ do
   parser:flag('-D --debug', 'Run debug test suite.')
   parser:flag('-V --verbose', 'Enable verbose logging.')
 
-  parser:option('-t --transformations', 'Source code transformations.'):args('?')
-  parser:option('-m --mutations', 'Bytecode transformations.', 'forprep'):args('?')
+  parser:option('-t --transformations', 'Source code transformations.'):args('*')
+  parser:option('-m --mutations', 'Bytecode transformations.', 'forprep'):args('*')
+
   parser:flag('--no-mutations', 'Completely disable bytecode mutations.')
   parser:flag('--no-transformations', 'Completely disable AST transformations.')
   parser:flag('--pretty-bytecode', 'Return loadstring(...)() call.')
@@ -37,12 +44,6 @@ do
 
     print('')
   end 
-end
-
-local obfuscators = {}
-do 
-  obfuscators.ast = require 'transformations/transformations'
-  obfuscators.bytecode = require 'mutations/mutations'
 end
 
 local source
