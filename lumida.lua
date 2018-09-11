@@ -60,13 +60,13 @@ do
     #arguments.transformations > 0 then 
 
     for _, v in ipairs(arguments.transformations) do 
-      assert(obfuscators.bytecode[v], 'No AST transformer: ' .. v)
+      assert(obfuscators.ast[v], 'No AST transformer: ' .. v)
 
       if arguments.verbose then 
         print('Running source transformation: ' .. v)
       end
 
-      source = obfuscators.ast[v](output, verbose)
+      source = obfuscators.ast[v](source, verbose)
     end
   elseif arguments.verbose then 
     print 'Skipping AST transformations.'
