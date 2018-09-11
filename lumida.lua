@@ -13,30 +13,28 @@ do
   local parser = argparse('lumida.lua')
 
   parser:argument('input', 'Input file.')
+  parser:option('-output', 'Output file.', 'out.luac')
 
-  parser:flag('--no-mutations', 'Disable bytecode mutation.')
-  parser:flag('--no-transformations', 'Disable AST transformations.')
   parser:flag('-R --roblox', 'Enable ROBLOX bytecode specialization.')
   parser:flag('-D --debug', 'Run debug test suite.')
   parser:flag('-V --verbose', 'Enable verbose logging.')
 
-  parser:option('-output', 'Output file.', 'out.luac')
   parser:option('-t --transformations', 'Source code transformations.'):args('?')
   parser:option('-m --mutations', 'Bytecode transformations.'):args('?')
+  parser:flag('--no-mutations', 'Completely disable bytecode mutations.')
+  parser:flag('--no-transformations', 'Completely disable AST transformations.')
 
   arguments = parser:parse()
 end
 
 local obfuscators = {}
 do 
-  obfuscators.ast = {}
-  obfuscators.bytecode = {}
+  obfuscators.ast = require 'transformations/transformations.lua'
+  obfuscators.bytecode = require 'mutations/mutations.lua'
 end
 
 local source
 do 
-  local compiler = require 'compiler'
-
   _G.regular_lua = not arguments.roblox 
 
   source = arguments.debug and 
@@ -63,7 +61,11 @@ do
     not arguments.no_mutations
     arguments.mutations and 
     #arguments.mutations > 0 then 
-    
+
+    local compiler 
+    compiler, _G.regular_lua = require 'compiler.lua', not arguments.roblox
+    source = compiler.compile_to_proto(source, '=lumida')
+
     for _, v in ipairs(arguments.transformations) do 
       if not obfuscators.bytecode[v] then 
         error('Bytecode obfuscator ' .. v .. ' does not exist.')

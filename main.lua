@@ -2,8 +2,6 @@ local code = [[
     local a; local function b() local c = 1 print(a) end;
 ]]
 
-local compiler = require("compiler")
-
 _G.regular_lua = true
 
 local proto = compiler.compile_to_proto(code, "=lumida")
