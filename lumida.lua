@@ -23,6 +23,7 @@ do
   parser:option('-m --mutations', 'Bytecode transformations.'):args('?')
   parser:flag('--no-mutations', 'Completely disable bytecode mutations.')
   parser:flag('--no-transformations', 'Completely disable AST transformations.')
+  parser:flag('--pretty-bytecode', 'Return loadstring(...)() call.')
 
   arguments = parser:parse()
 end
@@ -73,8 +74,15 @@ do
 
       source = obfuscators.bytecode[v](output, verbose)
     end
-  end 
 
+
+    source = compiler.compile_proto(proto)
+    if arguments.pretty_bytecode then 
+      local dump = {
+        source:byte(1, 9e9)
+      }
+      source = 'loadstring(' .. table.concat(dump, '\\') .. ')()'
+    end
 end
 
 do 

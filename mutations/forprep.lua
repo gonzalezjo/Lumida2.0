@@ -27,7 +27,7 @@ local function obfuscate_proto(pr)
 
       p.sizek = p.sizek + 1
       p.maxstacksize = p.maxstacksize + 3
-      
+
       table.insert(p.code, 0, {
         OP = 1,
         A = p.maxstacksize - 3,
@@ -88,18 +88,19 @@ end
 obfuscate_proto(proto)
 
 return function(proto, verbose)
+  local table_print = require 'lib/table_print.lua' -- for ~~smashing~~ printing the protos
 
+  obfuscate_proto(proto)
+
+  if verbose then 
+    table_print(proto)
+  end
+
+  return proto
 end
-
-
-table_print(proto)
 
 local bc = compiler.compile_proto(proto)
 print(bc)
-
-local f = io.open("output.luac", "wb")
-f:write(bc)
-f:close()
 
 local built = ""
 for i=1, #bc do
