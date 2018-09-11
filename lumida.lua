@@ -90,7 +90,7 @@ do
         print('Running bytecode mutation: ' .. v)
       end
 
-      source = obfuscators.bytecode[v](output, verbose)
+      source = obfuscators.bytecode[v](source, verbose)
     end
 
     source = assert(compiler.compile_proto(proto), 'Failed to compile proto.')
