@@ -96,13 +96,3 @@ return function(proto, verbose)
 
   return proto
 end
-
-local bc = compiler.compile_proto(proto)
-print(bc)
-
-local built = ""
-for i=1, #bc do
-  built = built .. "\\" .. string.byte(bc, i)
-end
-print(built)
-print(loadstring(bc))

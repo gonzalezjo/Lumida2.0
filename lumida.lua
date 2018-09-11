@@ -57,6 +57,8 @@ do
     end
   end 
 
+  assert(source and loadstring(source), 'Invalid AST transformations.')
+
   if 
     not arguments.no_mutations
     arguments.mutations and 
@@ -74,13 +76,15 @@ do
       source = obfuscators.bytecode[v](output, verbose)
     end
 
+    source = assert(compiler.compile_proto(proto), 'Failed to compile proto.')
 
-    source = compiler.compile_proto(proto)
+    assert(loadstring(source), 'Invalid bytecode transformations.')
+
     if arguments.pretty_bytecode then 
       local dump = {
         source:byte(1, 9e9) -- please do not write 9e9 + 1 instructions worth of code. 
       }
-      
+
       source = 'loadstring(' .. table.concat(dump, '\\') .. ')()'
     end
 end
