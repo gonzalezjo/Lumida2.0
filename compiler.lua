@@ -1,3 +1,10 @@
+local print = print 
+
+if not _G.VERBOSE_COMPILATION then
+	print = function()
+	end
+end 
+
 -- Adapted from the amazing Yueliang project
 -- http://yueliang.luaforge.net/
 

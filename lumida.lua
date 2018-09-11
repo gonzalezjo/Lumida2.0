@@ -1,3 +1,5 @@
+math.randomseed(os.time() + os.clock())
+
 local DEBUG_CODE = [[
 local a
 
@@ -36,6 +38,8 @@ do
   _G.regular_lua = not arguments.roblox -- globals :\\\\/\/\/\//\/
 
   if arguments.verbose then 
+    _G.VERBOSE_COMPILATION = true
+
     print('Arguments: ')
     
     for k, v in pairs(arguments) do 
@@ -66,7 +70,6 @@ do
         print('Running source transformation: ' .. v)
       end
 
-      print('Source: ', source)
       source = obfuscators.ast[v](source, verbose)
     end
   elseif arguments.verbose then 
