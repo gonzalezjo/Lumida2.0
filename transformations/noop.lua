@@ -15,9 +15,14 @@ local UpperChars = lookupify{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
 							 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'}
 local Digits = lookupify{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
 
+local formatStatlist
 local function Format_Beautify(code, verbose)
 	if type(code) == 'string' then 
-		code = ParseLua(code)
+		local success, result = ParseLua(code)
+    assert(success, 'Failed to parse code.')
+		code = result
+	else 
+		error(code)
 	end
 
 	local formatStatlist, formatExpr
@@ -343,7 +348,7 @@ local function Format_Beautify(code, verbose)
 		return out
 	end
 
-	return formatStatlist(ast)
+	return formatStatlist(code)
 end
 
 return Format_Beautify

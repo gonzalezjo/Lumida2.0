@@ -66,6 +66,7 @@ do
         print('Running source transformation: ' .. v)
       end
 
+      print('Source: ', source)
       source = obfuscators.ast[v](source, verbose)
     end
   elseif arguments.verbose then 
