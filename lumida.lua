@@ -26,7 +26,7 @@ do
   parser:flag('-V --verbose', 'Enable verbose logging.')
 
   parser:option('-t --transformations', 'Source code transformations.'):args('*')
-  parser:option('-m --mutations', 'Bytecode transformations.', 'forprep'):args('*')
+  parser:option('-m --mutations', 'Bytecode transformations.', {'forprep'}):args('*'):defmode('unused')
 
   parser:flag('--no-mutations', 'Completely disable bytecode mutations.')
   parser:flag('--no-transformations', 'Completely disable AST transformations.')
