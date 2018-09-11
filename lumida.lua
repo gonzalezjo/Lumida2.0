@@ -32,7 +32,7 @@ do
     print('Arguments: ')
     
     for k, v in pairs(arguments) do 
-      print(k, v)
+      print(k, v, (type(v) == 'table' and ('Size: ' .. #v) or ''))
     end
 
     print('')
