@@ -2,9 +2,9 @@
 -- Does (practically) nothing to the source code.
 -- 
 
-local parser = require"luaminify.lib.ParseLua"
-local ParseLua = parser.ParseLua
-local util = require'luaminify.lib.Util'
+local parser = require 'luaminify.lib.ParseLua'
+local parselua = parser.ParseLua
+local util = require 'luaminify.lib.Util'
 local lookupify = util.lookupify
 
 local LowerChars = lookupify{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
@@ -18,7 +18,7 @@ local Digits = lookupify{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
 local formatStatlist
 local function Format_Beautify(code, verbose)
 	if type(code) == 'string' then 
-		local success, result = ParseLua(code)
+		local success, result = parselua(code)
     assert(success, 'Failed to parse code.')
 		code = result
 	else 
@@ -321,19 +321,16 @@ local function Format_Beautify(code, verbose)
 			out = getIndentation() .. "::" .. statement.Label .. "::" .. EOL
 		elseif statement.AstType == 'GotoStatement' then
 			out = getIndentation() .. "goto " .. statement.Label .. EOL
-		elseif statement.AstType == 'Comment' then
+		elseif statement.AstType == 'Comment' then -- Comments get ignored.
 			if statement.CommentType == 'Shebang' then
-				out = getIndentation() .. statement.Data
-				--out = out .. EOL
+				out = getIndentation() .. statement.Data 
 			elseif statement.CommentType == 'Comment' then
 				out = getIndentation() .. statement.Data
-				--out = out .. EOL
 			elseif statement.CommentType == 'LongComment' then
 				out = getIndentation() .. statement.Data
-				--out = out .. EOL
 			end
 		elseif statement.AstType == 'Eof' then
-			-- Ignore
+			-- Ignored
 		else
 			print("Unknown AST Type: ", statement.AstType)
 		end

@@ -1,5 +1,5 @@
 local parser = require 'luaminify.lib.ParseLua'
-local ParseLua = parser.ParseLua
+local parselua = parser.ParseLua
 local util = require 'luaminify.lib.Util'
 local lookupify = util.lookupify
 
@@ -92,7 +92,7 @@ end
 
 local function Format_Beautify(code, verbose)
   if type(code) == 'string' then 
-    local success, result = ParseLua(code)
+    local success, result = parselua(code)
     assert(success, 'Failed to parse code.')
     code = result
   else 
