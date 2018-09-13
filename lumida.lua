@@ -41,7 +41,7 @@ do
     _G.VERBOSE_COMPILATION = true
 
     print('Arguments: ')
-    
+
     for k, v in pairs(arguments) do 
       print(k, v, (type(v) == 'table' and ('Size: ' .. #v) or ''))
     end
@@ -84,12 +84,12 @@ do
     #arguments.mutations > 0 then 
 
     local compiler 
-    compiler, _G.regular_lua = require 'compiler', not arguments.roblox
+    compiler = require 'compiler'
     source = compiler.compile_to_proto(source, '=lumida')
 
     for _, v in ipairs(arguments.mutations) do 
       assert(obfuscators.bytecode[v], 'No bytecode mutator: ' .. v)
-      
+
       if arguments.verbose then 
         print('Running bytecode mutation: ' .. v)
       end
