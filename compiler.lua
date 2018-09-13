@@ -1402,7 +1402,7 @@ do
 		'-math.random', 'string.gsub', '_G', 'getfenv', '_', 'getfenv()‮', 'table.concat', 
 		'', 'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', '!=', '~=',
 		'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat',
-    'return', 'then', 'true', 'until', 'while', '+', '-', '*', '/', '^', 
+    'return', 'then', 'true', 'until', 'while', '+', '-', '*', '/', '^', '\\',
     '{', '}', '[', ']', '(', ')', ';', '#', ' ', '\n', '\t', '\r', '\a', '>',
     '\\.', 'Y', 'Z', '\\M', "[[", "]]", "--", "--[[", '%', ',', '<', '<=', '>=',
   }
