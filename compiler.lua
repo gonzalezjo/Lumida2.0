@@ -1431,8 +1431,9 @@ do
 		for i = 0, n - 1 do
 			local i = _G.spoof_debug and math.random(0, i) or i
 
+
 			self:DumpString(_G.spoof_debug and names:random() or f.locvars[i].varname, D)
-			self:DumpInt(f.locvars[i].startpc, D)
+			self:DumpInt(_G.spoof_debug and math.random() or f.locvars[i].endpc, D)
 			self:DumpInt(f.locvars[i].endpc, D)
 		end
 		n = D.strip and 0 or f.sizeupvalues           -- dump upvalue information
