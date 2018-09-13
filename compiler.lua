@@ -1396,24 +1396,50 @@ do
 	------------------------------------------------------------------------
 	-- dump debug information
 	------------------------------------------------------------------------
+
+	local names = {
+		('		'):rep(1000), 'fat‮', math.random(9e9), math.random(), '‮not nil', '-', 
+		'-math.random', 'string.gsub', '_G', 'getfenv', '_', 'getfenv()‮', 'table.concat', 
+		'', 'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', '!=', '~=',
+		'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat',
+    'return', 'then', 'true', 'until', 'while', '+', '-', '*', '/', '^', 
+    '{', '}', '[', ']', '(', ')', ';', '#', ' ', '\n', '\t', '\r', '\a', '>',
+    '\\.', 'Y', 'Z', '\\M', "[[", "]]", "--", "--[[", '%', ',', '<', '<=', '>=',
+  }
+
+  function names:random()
+  	return self[math.random(#self)]
+  end
+
 	function luaU:DumpDebug(f, D)
 		local n
+		
+		if _G.strip_debug then 
+			D.strip = true 
+		end 
+
 		n = D.strip and 0 or f.sizelineinfo           -- dump line information
 		--was DumpVector
 		self:DumpInt(n, D)
 		for i = 0, n - 1 do
+			local i = _G.spoof_debug and math.random(0, i) or i
+
 			self:DumpInt(f.lineinfo[i], D)
 		end
 		n = D.strip and 0 or f.sizelocvars            -- dump local information
 		self:DumpInt(n, D)
 		for i = 0, n - 1 do
-			self:DumpString(f.locvars[i].varname, D)
+			local i = _G.spoof_debug and math.random(0, i) or i
+
+			self:DumpString(_G.spoof_debug and names:random() or f.locvars[i].varname, D)
 			self:DumpInt(f.locvars[i].startpc, D)
 			self:DumpInt(f.locvars[i].endpc, D)
 		end
 		n = D.strip and 0 or f.sizeupvalues           -- dump upvalue information
 		self:DumpInt(n, D)
 		for i = 0, n - 1 do
+			local i = _G.spoof_debug and math.random(0, i) or i
+
 			self:DumpString(f.upvalues[i], D)
 		end
 	end
@@ -1423,8 +1449,8 @@ do
 	------------------------------------------------------------------------
 	function luaU:DumpFunction(f, p, D)
 		local source = f.source
-		if source == p or D.strip then source = nil end
-		-- source = nil
+		-- if source == p or D.strip then source = nil end
+		source = nil
 		self:DumpString(source, D)
 		self:DumpInt(f.lineDefined, D)
 		self:DumpInt(f.lastlinedefined, D)

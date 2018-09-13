@@ -1,8 +1,9 @@
-local function obfuscate_proto(pr)
-  local function process_proto(p)
+local function obfuscate_proto(proto)
+  local function process_proto(proto)
+    -- noop
   end
 
-  return pr
+  return proto
 end
 
 return function(proto, verbose)
