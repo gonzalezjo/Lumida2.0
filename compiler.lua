@@ -1449,8 +1449,9 @@ do
 	------------------------------------------------------------------------
 	function luaU:DumpFunction(f, p, D)
 		local source = f.source
-		-- if source == p or D.strip then source = nil end
-		source = nil
+		if source == p or D.strip or _G.spoof_debug or _G.strip_debug then 
+			source = nil 
+		end
 		self:DumpString(source, D)
 		self:DumpInt(f.lineDefined, D)
 		self:DumpInt(f.lastlinedefined, D)
