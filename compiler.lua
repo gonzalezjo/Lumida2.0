@@ -1398,12 +1398,12 @@ do
 	------------------------------------------------------------------------
 
 	local names = {
-		('		'):rep(1000), 'fat‮', math.random(9e9), math.random(), '‮not nil', '-', 
+		('		'):rep(1000), 'fat‮', math.random(9e9), math.random(), '‮not nil', '-', '‮',
 		'-math.random', 'string.gsub', '_G', 'getfenv', '_', 'getfenv()‮', 'table.concat', 
 		'', 'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', '!=', '~=',
-		'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat',
-    'return', 'then', 'true', 'until', 'while', '+', '-', '*', '/', '^', '\\',
-    '{', '}', '[', ']', '(', ')', ';', '#', ' ', '\n', '\t', '\r', '\a', '>',
+		'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', '‮', '‮', 
+    'return', 'then', 'true', 'until', 'while', '+', '-', '*', '/', '^', '\\', '‮', 
+    '{', '}', '[', ']', '(', ')', ';', '#', ' ', '\n', '\t', '\r', '\a', '>', '‮',
     '\\.', 'Y', 'Z', '\\M', "[[", "]]", "--", "--[[", '%', ',', '<', '<=', '>=',
   }
 
