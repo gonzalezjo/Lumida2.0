@@ -32,7 +32,7 @@ local function mutateNumber(number) -- should encode 3 as like #"255" to really 
     if number < 255 and number == math.floor(number) and number > 0 then
       if option < 0.5 then
         if number > 127 then
-          return ("byte('" .. string.char(number) .. "')")
+          return ("string['byte'](%q)"):format(string.char(number))
         else
           local comp1 = math.abs(255 - math.floor(number * math.random() * 2) * 0.5 + 60)
           comp1 = comp1 ^ math.random() * 2
