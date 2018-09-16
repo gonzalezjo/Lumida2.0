@@ -28,6 +28,7 @@ do
   parser:flag('-R --roblox', 'Enable ROBLOX bytecode specialization.')
   parser:flag('-D --debug', 'Run debug test suite.')
   parser:flag('-V --verbose', 'Enable verbose logging.')
+  parser:flag('-S --skip-validation', 'Completely disable bytecode validation.')
 
   parser:option('-t --transformations', 'Source code transformations.'):args('*')
   parser:option('-m --mutations', 'Bytecode transformations.', {'forprep'}):args('*'):defmode('unused')
@@ -38,6 +39,7 @@ do
 
   arguments = parser:parse()
   _G.regular_lua = not arguments.roblox -- globals :\\\\/\/\/\//\/
+  arguments.skip_validation = arguments.skip_validation or (not _G.regular_lua or not _VERSION:match 'Lua 5.1' or jit) 
 
   if arguments.verbose then 
     _G.VERBOSE_COMPILATION = true
@@ -101,7 +103,7 @@ do
 
     source = assert(compiler.compile_proto(source), 'Failed to compile proto.')
 
-    if not arguments.roblox then
+    if not arguments.skip_validation then
       assert(loadstring(source), 'Invalid bytecode transformations.')
     end
 
