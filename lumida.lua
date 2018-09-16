@@ -7,6 +7,8 @@ local function b()
   local c = 1
   print(a)
 end
+
+b()
 ]]
 
 local obfuscators = {}
@@ -99,14 +101,16 @@ do
 
     source = assert(compiler.compile_proto(source), 'Failed to compile proto.')
 
-    assert(loadstring(source), 'Invalid bytecode transformations.')
+    if not arguments.roblox then
+      assert(loadstring(source), 'Invalid bytecode transformations.')
+    end
 
     if arguments.pretty_bytecode then 
       local dump = {
-        source:byte(1, 9e9) -- please do not write 9e9 + 1 instructions worth of code. 
+        source:byte(1, 2 ^ 31 - 1) -- please do not write 9e9 + 1 instructions worth of code. 
       }
 
-      source = 'loadstring(\'' .. table.concat(dump, '\\') .. '\')()'
+      source = 'loadstring(\'\\' .. table.concat(dump, '\\') .. '\')()'
     end    
   elseif arguments.verbose then  
     print 'Skipping bytecode mutations.'
