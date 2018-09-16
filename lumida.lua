@@ -81,7 +81,7 @@ do
   end 
 
   local succ, err = pcall(assert, source and loadstring(source), 'Invalid AST transformations')
-  if err then 
+  if not succ then 
     if verbose then 
       print('Error during AST transformation: ', err)
       print('Source code: \n', source)
