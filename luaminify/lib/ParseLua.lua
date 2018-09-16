@@ -244,7 +244,6 @@ local function LexLua(src)
 			--get the initial char
 			local thisLine = line
 			local thisChar = char
-			local errorAt = ":"..line..":"..char..":> "
 			local c = peek()
 
 			--symbol to emit
@@ -372,9 +371,6 @@ local function LexLua(src)
 
 			toEmit.Line = thisLine
 			toEmit.Char = thisChar
-			toEmit.Print = function()
-				return "<"..(toEmit.Type..string.rep(' ', 7-#toEmit.Type)).."  "..(toEmit.Data or '').." >"
-			end
 			tokens[#tokens+1] = toEmit
 
 			--halt after eof has been emitted
@@ -405,13 +401,17 @@ local function LexLua(src)
 	--getters
 	function tok:Peek(n)
 		n = n or 0
-		return tokens[math.min(#tokens, p+n)]
+		local len = #tokens
+		local sum = p + n
+		return tokens[len <= sum and len or sum]
 	end
 	function tok:Get(tokenList)
 		local t = tokens[p]
-		p = math.min(p + 1, #tokens)
+		local len = #tokens
+		local sum = p + 1
+		p = sum <= len and sum or len
 		if tokenList then
-			table.insert(tokenList, t)
+			tokenList[#tokenList + 1] = t
 		end
 		return t
 	end
@@ -447,8 +447,6 @@ local function LexLua(src)
 				self:Get(tokenList)
 				return t
 			end
-		else
-			return nil
 		end
 	end
 

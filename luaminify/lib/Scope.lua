@@ -17,7 +17,8 @@ local Scope = {
 	end,
 	
 	AddLocal = function(self, v)
-		table.insert(self.Locals, v)
+		self.Locals[#self.Locals + 1] = v
+		self.Locals[v.Name] = v
 	end,
 	
 	AddGlobal = function(self, v)
@@ -39,11 +40,10 @@ local Scope = {
 	end,
 	
 	GetLocal = function(self, name)
-		for k, var in pairs(self.Locals) do
-			if var.Name == name then return var end
-		end
-		
-		if self.Parent then
+		local _local = self.Locals[name]
+		if _local then 
+			return _local 
+		elseif self.Parent then
 			return self.Parent:GetLocal(name)
 		end
 	end,
