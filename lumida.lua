@@ -23,7 +23,7 @@ do
   local parser = argparse('lumida.lua')
 
   parser:argument('input', 'Input file.')
-  parser:option('-output', 'Output file.', 'out.luac')
+  parser:option('-o --output', 'Output file.', 'out.luac')
 
   parser:flag('-R --roblox', 'Enable ROBLOX bytecode specialization.')
   parser:flag('-D --debug', 'Run debug test suite.')
