@@ -62,6 +62,10 @@ do
 
   local verbose = arguments.verbose
 
+  local lmprof = require 'lmprof'
+
+  lmprof.start 'lmprof_logs.lua'
+
   if 
     not arguments.no_transformations and 
     arguments.transformations and 
@@ -79,6 +83,9 @@ do
   elseif arguments.verbose then 
     print 'Skipping AST transformations.'
   end 
+
+  lmprof.stop 'lmprof_logs.lua'
+
 
   local succ, err = pcall(assert, source and loadstring(source), 'Invalid AST transformations')
   if not succ then 

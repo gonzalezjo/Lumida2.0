@@ -30,14 +30,14 @@ local function Format_Beautify(code, verbose)
       local number = table.remove(numbers, math.random(#numbers))
       local char = string.char(number)
       local chars = character_lookup[char]
-      alphabet[len] = '\\' .. number
+      alphabet[len] = string.format('%q', char)
       chars[#chars + 1] = len  
       len = len + 1
     end
 
   end
 
-  for i = 1, 1 do 
+  for i = 1, 90 do 
     add_to_alphabet()
   end
 
@@ -381,7 +381,7 @@ local function Format_Beautify(code, verbose)
 
   formatStatlist = function(statList)
     local out = ''
-    out = out .. 'local alphabet = {\'' .. table.concat(alphabet, '\', \'') .. '\'}\n'
+    out = out .. 'local alphabet = {' .. table.concat(alphabet, ', ') .. '}\n'
     for _, stat in pairs(statList.Body) do
       out = joinStatementsSafe(out, formatStatement(stat) .. EOL)
     end

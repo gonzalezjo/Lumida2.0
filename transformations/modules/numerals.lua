@@ -75,15 +75,8 @@ local function mutateNumber(number) -- should encode 3 as like #"255" to really 
         --   newmessage = ("0"):rep(#newmessage%3)..newmessage
         --   return "tonumber(" .. newmessage:gsub("...", function(c) return mutatenumber(c).. "\"..\"" end) .. ")"
         -- end
-      elseif option < 0.6 then
-        local random = math.random(1337)
-        return "(" .. number - random .. "+" .. random ..")"
       elseif option < 0.8 then
         return "(" .. "tonumber(" .. "\"" .. number .. "\"))"
-      else
-        local offset = math.random(-10000000, 9e9)
-        local modulonum = math.random(number+offset+1, number+offset+9e9)
-        return "(" .. number + offset .. "%" .. modulonum .. "-" .. offset .. ")"
       end
     end
 
@@ -93,6 +86,7 @@ end
 local function Format_Beautify(code, verbose)
   if type(code) == 'string' then 
     local success, result = parselua(code)
+    print(code)
     assert(success, 'Failed to parse code.')
     code = result
   else 
