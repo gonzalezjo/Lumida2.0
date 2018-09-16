@@ -46,6 +46,17 @@ local function Format_Beautify(code, verbose)
     return string.format('alphabet[%d]', subtree[math.random(#subtree)])
   end
 
+  local function obfuscated_string(str) -- takes a .Data
+    local decoded = loadstring('return ' .. str)()
+    encoded = {}
+
+    for i = 1, #decoded do 
+      encoded[i] = generate_alphabet_access(decoded:sub(i, i))
+    end 
+
+    return string.format('(%s)', table.concat(encoded, ' .. '))
+  end
+
   if type(code) == 'string' then 
     local success, result = parselua(code)
     assert(success, 'Failed to parse code.')
@@ -107,7 +118,7 @@ local function Format_Beautify(code, verbose)
       out = out..expr.Value.Data
 
     elseif expr.AstType == 'StringExpr' then
-      out = out..expr.Value.Data
+      out = out .. obfuscated_string(expr.Value.Data) 
 
     elseif expr.AstType == 'BooleanExpr' then
       out = out..tostring(expr.Value)
@@ -143,20 +154,7 @@ local function Format_Beautify(code, verbose)
       out = out..formatExpr(expr.Arguments[1])
 
     elseif expr.AstType == 'StringCallExpr' then
-      local decoded = loadstring('return ' .. expr.Arguments[1].Data)()
-
-      local encoded = {}
-
-      for i = 1, #decoded do 
-        encoded[i] = generate_alphabet_access(decoded:sub(i, i))
-      end 
-
-      out = 
-        out ..
-        formatExpr(expr.Base) .. 
-        '(' .. 
-        table.concat(encoded, ' .. ') .. 
-        ')'
+      out = out .. formatExpr(expr.Base) .. obfuscated_string(expr.Arguments[1].Data)
 
     elseif expr.AstType == 'IndexExpr' then
       out = out..formatExpr(expr.Base).."["..formatExpr(expr.Index).."]"
