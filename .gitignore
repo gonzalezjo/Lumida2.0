@@ -2,3 +2,4 @@ unluac.jar
 lua5.1.dll
 lua5.1.exe
 .vscode/tasks.json
+out.luac
