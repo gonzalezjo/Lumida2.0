@@ -80,7 +80,15 @@ do
     print 'Skipping AST transformations.'
   end 
 
-  assert(source and loadstring(source), 'Invalid AST transformations.')
+  local succ, err = pcall(assert, source and loadstring(source), 'Invalid AST transformations')
+  if err then 
+    if verbose then 
+      print('Error during AST transformation: ', err)
+      print('Source code: \n', source)
+    end
+
+    error(err)
+  end
 
   if 
     not arguments.no_mutations and
