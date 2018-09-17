@@ -1,14 +1,7 @@
 math.randomseed(os.time() + os.clock())
 
 local DEBUG_CODE = [[
-local a
-
-local function b() 
-  local c = 1
-  print(a)
-end
-
-b()
+print'a'
 ]]
 
 local obfuscators = {}

@@ -1,6 +1,6 @@
 unluac.jar
 lua5.1.dll
 lua5.1.exe
-.vscode/tasks.json
+.vscode/*
 out.luac
 lmprof.so
