@@ -3,7 +3,7 @@ table_print = require 'lib/table_print'
 
 shift_down_array = (array) -> {k - 1, v for k, v in ipairs array}
 repetitions = (x, scalar) -> scalar * (math.exp(-x * .8) * math.exp(-50 * math.exp(-26 * (x - 0.85))))
-get_jumps = (min = 2, max = 2, scalar = 50, x = math.random()) -> math.min(math.max(min, repetitions x, 50), max)
+get_jumps = (min = 2, max = 1, scalar = 50, x = math.random()) -> math.min(math.max(min, repetitions x, 50), max)
 
 obfuscate_proto = (proto, verbose) -> 
   print 'Beginning control flow obfuscation...' if verbose 
@@ -45,7 +45,7 @@ obfuscate_proto = (proto, verbose) ->
       continue if closures[i]
       for _ = 1, get_jumps!
         proto.sizecode += 1
-        table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: 131071 + math.random(-i + 1, #new_instructions - 1)
+        table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: 131071 -- + math.random(-i + 1, #new_instructions - 1)
 
     new_instructions = shift_down_array new_instructions
 
@@ -58,14 +58,15 @@ obfuscate_proto = (proto, verbose) ->
 
         switch instruction.OP
           when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
-            instruction.Bx = new_positions[new_instructions]
+            assert(false, 'Should not run.')
+            instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
           when opcodes.EQ, opcodes.LT, opcodes.LE, opcodes.TEST, opcodes.TESTSET
             {fallthrough, destination} = jumps[instruction]
-            new_instructions[i + 1].Bx = 131071 + new_positions[fallthrough] - (i + 1)
-            new_instructions[i + 2].Bx = 131071 + new_positions[destination] - (i + 2)
+            new_instructions[i + 1].Bx = 131070 + new_positions[fallthrough] - (i + 1)
+            new_instructions[i + 2].Bx = 131070 + new_positions[destination] - (i + 2)
           else
             target = new_positions[old_instructions[old_positions[instruction] + 1]]
-            new_instructions[i + 1].Bx = 131071 + target - (i + 1)
+            new_instructions[i + 1].Bx = 131071 + target - (i)
 
     if verbose
       print 'Old table: '

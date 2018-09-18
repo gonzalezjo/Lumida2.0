@@ -18,7 +18,7 @@ get_jumps = function(min, max, scalar, x)
     min = 2
   end
   if max == nil then
-    max = 2
+    max = 1
   end
   if scalar == nil then
     scalar = 50
@@ -119,7 +119,7 @@ obfuscate_proto = function(proto, verbose)
           table.insert(new_instructions, i, {
             OP = opcodes.JMP,
             A = 0,
-            Bx = 131071 + math.random(-i + 1, #new_instructions - 1)
+            Bx = 131071
           })
         end
         _continue_0 = true
@@ -143,18 +143,19 @@ obfuscate_proto = function(proto, verbose)
           end
           local _exp_0 = instruction.OP
           if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
-            instruction.Bx = new_positions[new_instructions]
+            assert(false, 'Should not run.')
+            instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
           elseif opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 or opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
             local fallthrough, destination
             do
               local _obj_0 = jumps[instruction]
               fallthrough, destination = _obj_0[1], _obj_0[2]
             end
-            new_instructions[i + 1].Bx = 131071 + new_positions[fallthrough] - (i + 1)
-            new_instructions[i + 2].Bx = 131071 + new_positions[destination] - (i + 2)
+            new_instructions[i + 1].Bx = 131070 + new_positions[fallthrough] - (i + 1)
+            new_instructions[i + 2].Bx = 131070 + new_positions[destination] - (i + 2)
           else
             local target = new_positions[old_instructions[old_positions[instruction] + 1]]
-            new_instructions[i + 1].Bx = 131071 + target - (i + 1)
+            new_instructions[i + 1].Bx = 131071 + target - (i)
           end
         end
         _continue_0 = true
