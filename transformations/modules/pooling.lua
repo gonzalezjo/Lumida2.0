@@ -18,7 +18,7 @@ end
 
 local acceptable_names = {}
 
-local USE_ASSERTS, sanity_check = true 
+local USE_ASSERTS, sanity_check = false 
 if USE_ASSERTS then
   sanity_check = {} 
 end
@@ -59,7 +59,6 @@ return function(code, ast)
     error(code)
   end
 
-  print(getRandomName())
   local CONSTANT_POOL_NAME = assert(getRandomName(), 'No name?')
 
   -- Rip constant strings out
