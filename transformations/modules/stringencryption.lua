@@ -69,10 +69,6 @@ local function Format_Beautify(code, verbose)
   local indent = 0
   local EOL = "\n"
 
-  local function getIndentation()
-    return string.rep("    ", indent)
-  end
-
   local function joinStatementsSafe(a, b, sep)
     sep = sep or ''
     local aa, bb = a:sub(-1,-1), b:sub(1,1)
