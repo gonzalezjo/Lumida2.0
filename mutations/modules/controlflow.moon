@@ -6,6 +6,8 @@ shuffled_array = (array) ->
       j = math.random i
       a[i], a[j] = a[j], a[i]
 
+repetitions = (scalar, seed = math.random()) -> scalar * (math.exp(e, -seed * .8) * exp(-50 * exp(-26 * (seed - 0.85)))) -- PDF of gumbel EVD w/transformations
+
 shift_down_array = (array) -> {k - 1, v for k, v in ipairs array}
 
 obfuscate_proto = (proto) -> 
