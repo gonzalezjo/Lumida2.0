@@ -73,7 +73,7 @@ local function Format_Beautify(code, verbose)
   end
 
   formatExpr = function(expr)
-    local out = 1uilder(string.rep('(', expr.ParenCount or 0))
+    local out = stringbuilder(string.rep('(', expr.ParenCount or 0))
 
     if expr.AstType == 'VarExpr' then
       if expr.Variable then
