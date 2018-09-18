@@ -3,6 +3,7 @@ local mutations = {
   noop = assert(require 'mutations/modules/noop'),
   nodebug = assert(require 'mutations/modules/nodebug'),
   spoofdebug = assert(require 'mutations/modules/spoofdebug'),
+  controlflow = assert(require 'mutations/modules/controlflow'),
 } 
 
 return mutations

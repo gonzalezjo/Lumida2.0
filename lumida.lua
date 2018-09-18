@@ -1,7 +1,7 @@
 math.randomseed(os.time() + os.clock())
 
 local DEBUG_CODE = [[
-print'a'
+  print'a'
 ]]
 
 local obfuscators = {}
@@ -113,7 +113,8 @@ do
         source:byte(1, 2 ^ 31 - 1) -- please do not write 9e9 + 1 instructions worth of code. 
       }
 
-      source = 'loadstring(\'\\' .. table.concat(dump, '\\') .. '\')()'
+      local s = 'loadstring(\'\\' .. table.concat(dump, '\\') .. '\')()'
+      print(s)
     end    
   elseif arguments.verbose then  
     print 'Skipping bytecode mutations.'
