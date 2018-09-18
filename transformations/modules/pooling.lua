@@ -5,7 +5,7 @@ local parselua = parser.ParseLua
 local util = require "luaminify.lib.Util"
 local lookupify = util.lookupify
 local stringbuilder = require "lib.stringbuilder"
-local format_beautify = require "transformations.modules.noop"
+local format_beautify = require "transformations.modules.noop_optimized"
 local bit = require 'bit'
 local acceptable_letters = {}
 
@@ -95,7 +95,7 @@ return function(code, ast)
   local function insertConstant(v, index, type)
     table.insert(
       constantPoolAstNode.EntryList,
-      math.random(#constantPoolAstNode.EntryList),
+      #constantPoolAstNode.EntryList == 0 and 1 or math.random(#constantPoolAstNode.EntryList),
       {
         Type = "Key",
         Value = {AstType = type or "StringExpr", Value = v},
