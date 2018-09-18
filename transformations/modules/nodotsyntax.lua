@@ -2,6 +2,7 @@ local parser = require 'luaminify.lib.ParseLua'
 local parselua = parser.ParseLua
 local util = require 'luaminify.lib.Util'
 local lookupify = util.lookupify
+local stringbuilder = require 'lib.stringbuilder'
 
 local LowerChars = lookupify{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
                'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
@@ -71,7 +72,7 @@ local function Format_Beautify(code, verbose)
   end
 
   formatExpr = function(expr)
-    local out = string.rep('(', expr.ParenCount or 0)
+    local out = stringbuilder(string.rep('(', expr.ParenCount or 0))
     if expr.AstType == 'VarExpr' then
       if expr.Variable then
         out = out .. expr.Variable.Name
@@ -175,11 +176,11 @@ local function Format_Beautify(code, verbose)
 
     end
     out = out..string.rep(')', expr.ParenCount or 0)
-    return out
+    return tostring(out)
   end
 
   local formatStatement = function(statement)
-    local out = ""
+    local out = stringbuilder()
     if statement.AstType == 'AssignmentStatement' then
       out = getIndentation()
       for i = 1, #statement.Lhs do
@@ -347,15 +348,15 @@ local function Format_Beautify(code, verbose)
     else
       print("Unknown AST Type: ", statement.AstType)
     end
-    return out
+    return tostring(out)
   end
 
   formatStatlist = function(statList)
-    local out = ''
+    local out = stringbuilder()
     for _, stat in pairs(statList.Body) do
       out = joinStatementsSafe(out, formatStatement(stat) .. EOL)
     end
-    return out
+    return tostring(out)
   end
 
   return formatStatlist(code)
