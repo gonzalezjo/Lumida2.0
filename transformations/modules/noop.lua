@@ -21,7 +21,7 @@ local function Format_Beautify(code, verbose)
 		local success, result = parselua(code)
     assert(success, 'Failed to parse code.')
 		code = result
-	else 
+	elseif type(code) ~= 'table' then 
 		error(code)
 	end
 
