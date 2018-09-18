@@ -1,40 +1,42 @@
 local function obfuscate_proto(proto)
   local function shuffle(t)
-    local rand = math.random 
-    assert(t, "table.shuffle() expected a table, got nil")
-    local iterations = #t
-    local j
-
-    for i = iterations, 2, -1 do
-      j = rand(i)
+    assert(type(t) == 'table', 'table.shuffle() expected a table.')
+    
+    for i = #t, 2, -1 do
+      local j = math.random(i)
       t[i], t[j] = t[j], t[i]
     end
   end
 
-  local function fix_table(t)
+  local function zero_indexed(t)
     local temp = {}
-    for i=1, #t do
+
+    for i = 1, #t do
       temp[i - 1] = t[i]
     end
+
     return temp
   end
 
   local function process_proto(p)
-    math.randomseed(os.time())
-
     local code_insts = {}
-
     local code_add = 0
 
-    for i = 0, p.sizecode - 1 do
-      local inst = p.code[i]
-      table.insert(code_insts, { original_pc = i, inst = inst })
+    -- Initialize code_insts
+    do 
+      for i = 0, p.sizecode - 1 do
+        table.insert(code_insts, { 
+          original_pc = i, 
+          inst = p.code[i] 
+        })
+      end
+
+      shuffle(code_insts)
     end
 
     local real_pos = {}
-
-    shuffle(code_insts)
     local new_code = {}
+
     for i= 1, #code_insts do
       table.insert(new_code, {
         OP = 22,
@@ -46,21 +48,19 @@ local function obfuscate_proto(proto)
     local to_fix = {}
 
     local get_jmp_pos = function(real)
-      for i, v in next, code_insts do
+      for i, v in pairs(code_insts) do
         if v.original_pc == real then
           return i - 1
         end
       end
-      return 0
     end
 
     local get_remap_pos = function(real)
-      for i, v in next, code_insts do
+      for i, v in pairs(code_insts) do
         if v.original_pc == real then
           return v.new_pc
         end
       end
-      return 0
     end
 
     for i= 1, #code_insts do
@@ -88,15 +88,8 @@ local function obfuscate_proto(proto)
       inst.Bx = 131071 + (get_remap_pos(inst_info.original_pc) - i)
     end
 
-    --[[table.insert(new_code, {
-      OP = 30,
-      A = 0,
-      B = 1,
-      C = 0
-    })]]
-
     p.sizecode = #new_code
-    p.code = fix_table(new_code)
+    p.code = zero_indexed(new_code)
     p.sizelineinfo = 0
 
 
