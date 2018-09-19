@@ -38,11 +38,11 @@ obfuscate_proto = (proto, verbose) ->
 
     -- Why #a - 1? It's simple. The last instruction is a return. We are *not* moving that.
     -- Or is it? Might be a subtle off by one, since apparently without the - 1, it worked for you?
-    -- with a = new_instructions           
-    --   for i = #a - 1, 1, -1   
-    --     continue if closures[i] 
-    --     j = math.random i
-    --     a[i], a[j] = a[j], a[i]
+    with a = new_instructions           
+      for i = #a - 1, 1, -1   
+        continue if closures[i] 
+        j = math.random i
+        a[i], a[j] = a[j], a[i]
 
     for i = #new_instructions, 1, -1
       continue if closures[i]

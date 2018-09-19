@@ -91,6 +91,24 @@ obfuscate_proto = function(proto, verbose)
         end
       end
     end
+    do
+      local a = new_instructions
+      for i = #a - 1, 1, -1 do
+        local _continue_0 = false
+        repeat
+          if closures[i] then
+            _continue_0 = true
+            break
+          end
+          local j = math.random(i)
+          a[i], a[j] = a[j], a[i]
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
+    end
     for i = #new_instructions, 1, -1 do
       local _continue_0 = false
       repeat
