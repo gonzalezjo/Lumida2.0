@@ -59,7 +59,6 @@ obfuscate_proto = function(proto, verbose)
       end
       new_instructions = _accum_0
     end
-    print(#old_instructions, #new_instructions)
     for i, instruction in ipairs(old_instructions) do
       old_positions[instruction] = i
       local _exp_0 = instruction.OP
@@ -68,10 +67,15 @@ obfuscate_proto = function(proto, verbose)
           fallthrough = old_instructions[i + old_instructions[i + 1].Bx - 131071],
           destination = old_instructions[i + 2]
         }
-      elseif opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
+      elseif opcodes.JMP == _exp_0 then
         jumps[instruction] = {
           old_instructions[i + instruction.Bx - 131071]
         }
+      elseif opcodes.FORPREP == _exp_0 or opcodes.FORLOOP == _exp_0 then
+        jumps[instruction] = {
+          old_instructions[i + instruction.Bx - 131070]
+        }
+        print(old_instructions[i + instruction.Bx - 131070].OP, 'OP')
       elseif opcodes.CLOSURE == _exp_0 then
         closures[i] = true
         do
@@ -145,6 +149,12 @@ obfuscate_proto = function(proto, verbose)
           end
           local _exp_0 = instruction.OP
           if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
+            if not (instruction.tampered) then
+              assert(jumps[instruction])
+              print(jumps[instruction][1], 'jumpobj')
+              assert(new_positions[jumps[instruction][1]])
+              instruction.Bx = 131071 + new_positions[jumps[instruction][1]] - (i + ((tonumber(instruction.OP) == 32 or tonumber(instruction.OP) == 31) and 1 or 0))
+            end
             print('noop')
           elseif opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
             local fallthrough, destination
@@ -155,7 +165,6 @@ obfuscate_proto = function(proto, verbose)
             new_instructions[i + 1].Bx = 131071 + new_positions[fallthrough] - (i + 2)
             new_instructions[i + 1].tampered = true
             new_instructions[i + 2].Bx = 131071 + new_positions[destination] - (i + 3)
-            new_instructions[i + 2].tampered = true
           elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
             local fallthrough, destination
             do

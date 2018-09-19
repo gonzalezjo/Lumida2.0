@@ -18,7 +18,6 @@ obfuscate_proto = (proto, verbose) ->
     old_instructions = {k + 1, v for k, v in pairs proto.code}
     new_instructions = [v for v in *old_instructions] 
 
-    print(#old_instructions, #new_instructions)
     for i, instruction in ipairs old_instructions
       old_positions[instruction] = i
 
@@ -27,8 +26,11 @@ obfuscate_proto = (proto, verbose) ->
           jumps[instruction] = 
             fallthrough: old_instructions[i + old_instructions[i + 1].Bx - 131071], 
             destination: old_instructions[i + 2]
-        when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP
+        when opcodes.JMP
           jumps[instruction] = {old_instructions[i + instruction.Bx - 131071]}
+        when opcodes.FORPREP, opcodes.FORLOOP
+          jumps[instruction] = {old_instructions[i + instruction.Bx - 131070]}
+          print(old_instructions[i + instruction.Bx - 131070].OP, 'OP')
         when opcodes.CLOSURE
           closures[i] = true
           closures[instruction] = for i = i + 1, #old_instructions
@@ -63,8 +65,15 @@ obfuscate_proto = (proto, verbose) ->
         switch instruction.OP
           when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
             -- assert(false, 'Should not run.')
-            -- unless instruction.tampered
-            -- instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
+
+            unless instruction.tampered
+              -- instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
+              assert(jumps[instruction])
+              print(jumps[instruction][1], 'jumpobj')
+              assert(new_positions[jumps[instruction][1]])
+              instruction.Bx = 131071 + new_positions[jumps[instruction][1]] - (i + ((tonumber(instruction.OP) == 32 or tonumber(instruction.OP) == 31) and 1 or 0))
+
+            -- instruction.Bx = 131071 = new_postiions 
             -- target = new_positions[old_instructions[old_positions[instruction] + 1]]
             -- new_instructions[i + 1].Bx = 131071 + (target - (i + 2))              
             print 'noop'
@@ -73,7 +82,6 @@ obfuscate_proto = (proto, verbose) ->
             new_instructions[i + 1].Bx = 131071 + new_positions[fallthrough] - (i + 2)
             new_instructions[i + 1].tampered = true
             new_instructions[i + 2].Bx = 131071 + new_positions[destination] - (i + 3)
-            new_instructions[i + 2].tampered = true
           when opcodes.TEST, opcodes.TESTSET
             {:fallthrough, :destination} = jumps[instruction]
             new_instructions[i + 1].Bx = 131071 + new_positions[destination] - (i + 1)
@@ -98,15 +106,13 @@ obfuscate_proto = (proto, verbose) ->
     obfuscate_proto p, verbose
     -- table_print p if verbose
 
--- 1 [1] LOADK     0 -2  ; 5
--- 2 [1] SETGLOBAL 0 -1  ; x
--- 3 [2] GETGLOBAL 0 -3  ; print
--- 4 [2] GETGLOBAL 1 -1  ; x
--- 5 [2] LT        0 1 -4  ; - 6
--- 6 [2] JMP       3 ; to 10
--- 7 [2] LOADK     1 -5  ; 1
--- 8 [2] TEST      1 0 1
--- 9 [2] JMP       1 ; to 11
--- 10  [2] LOADK     1 -6  ; 2
--- 11  [2] CALL      0 2 1
--- 12  [2] RETURN    0 1
+  -- 1 [1] LOADK     0 -1  ; 1
+  -- 2 [1] LOADK     1 -2  ; 10
+  -- 3 [1] LOADK     2 -1  ; 1
+  -- 4 [1] FORPREP   0 3 ; to 8
+  -- 5 [2] GETGLOBAL 4 -3  ; print
+  -- 6 [2] MOVE      5 3
+  -- 7 [2] CALL      4 2 1
+  -- 8 [1] FORLOOP   0 -4  ; to 5
+  -- 9 [3] RETURN    0 1
+
