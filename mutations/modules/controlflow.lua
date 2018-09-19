@@ -30,7 +30,6 @@ get_jumps = function(min, max, scalar, x)
 end
 local obfuscate_proto
 obfuscate_proto = function(proto, verbose)
-  math.randomseed(1337)
   if verbose then
     print('Beginning control flow obfuscation...')
   end
@@ -158,9 +157,6 @@ obfuscate_proto = function(proto, verbose)
             new_instructions[i + 2].Bx = 131071 + new_positions[destination] - (i + 2)
           else
             local target = new_positions[old_instructions[old_positions[instruction] + 1]]
-            print(instruction.OP, 'awaaa')
-            print(old_positions[instruction] + 1)
-            print(target, 'New location.')
             new_instructions[i + 1].Bx = 131071 + (target - (i + 2))
           end
         end
@@ -170,10 +166,7 @@ obfuscate_proto = function(proto, verbose)
         break
       end
     end
-    if verbose then
-      print('Old table: ')
-      print('New table:')
-    end
+    new_instructions[0].Bx = 131071 + new_positions[old_instructions[1]] - 1
     do
       local p = proto
       for i = 0, p.sizep - 1 do
