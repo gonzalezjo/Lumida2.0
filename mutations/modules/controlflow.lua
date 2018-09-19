@@ -18,7 +18,7 @@ get_jumps = function(min, max, scalar, x)
     min = 2
   end
   if max == nil then
-    max = 1
+    max = 2
   end
   if scalar == nil then
     scalar = 50
@@ -30,6 +30,7 @@ get_jumps = function(min, max, scalar, x)
 end
 local obfuscate_proto
 obfuscate_proto = function(proto, verbose)
+  math.randomseed(1337)
   if verbose then
     print('Beginning control flow obfuscation...')
   end
@@ -64,12 +65,12 @@ obfuscate_proto = function(proto, verbose)
       local _exp_0 = instruction.OP
       if opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 or opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
         jumps[instruction] = {
-          old_instructions[i + old_instructions[i + 1].Bx],
-          old_instructions[i + 2]
+          fallthrough = old_instructions[i + old_instructions[i + 1].Bx - 131071],
+          destination = old_instructions[i + 2]
         }
       elseif opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
         jumps[instruction] = {
-          old_instructions[i - instruction.Bx]
+          old_instructions[i + instruction.Bx - 131071]
         }
       elseif opcodes.CLOSURE == _exp_0 then
         closures[i] = true
@@ -120,7 +121,7 @@ obfuscate_proto = function(proto, verbose)
           table.insert(new_instructions, i, {
             OP = opcodes.JMP,
             A = 0,
-            Bx = 131071
+            Bx = 131071 + math.random(-i + 1, #new_instructions - i)
           })
         end
         _continue_0 = true
@@ -144,17 +145,27 @@ obfuscate_proto = function(proto, verbose)
           end
           local _exp_0 = instruction.OP
           if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
-            assert(false, 'Should not run.')
-            instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
-          elseif opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 or opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
-            assert(false, 'Should not run.')
+            print('noop')
+          elseif opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
             local fallthrough, destination
             do
               local _obj_0 = jumps[instruction]
-              fallthrough, destination = _obj_0[1], _obj_0[2]
+              fallthrough, destination = _obj_0.fallthrough, _obj_0.destination
             end
-            new_instructions[i + 1].Bx = 131071 + new_positions[fallthrough] - (i + 1)
-            new_instructions[i + 2].Bx = 131071 + new_positions[destination] - (i + 2)
+            new_instructions[i + 1].Bx = 131071 + new_positions[fallthrough] - (i + 2)
+            new_instructions[i + 1].tampered = true
+            new_instructions[i + 2].Bx = 131071 + new_positions[destination] - (i + 3)
+            new_instructions[i + 2].tampered = true
+          elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
+            local fallthrough, destination
+            do
+              local _obj_0 = jumps[instruction]
+              fallthrough, destination = _obj_0.fallthrough, _obj_0.destination
+            end
+            new_instructions[i + 1].Bx = 131071 + new_positions[destination] - (i + 1)
+            new_instructions[i + 1].tampered = true
+            new_instructions[i + 2].Bx = 131071 + new_positions[fallthrough] - (i + 2)
+            new_instructions[i + 2].tampered = true
           else
             local target = new_positions[old_instructions[old_positions[instruction] + 1]]
             new_instructions[i + 1].Bx = 131071 + (target - (i + 2))

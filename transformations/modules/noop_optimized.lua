@@ -358,3 +358,5 @@ local function Format_Beautify(code, verbose)
 end
 
 return Format_Beautify
+
+
