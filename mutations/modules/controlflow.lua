@@ -30,6 +30,7 @@ get_jumps = function(min, max, scalar, x)
 end
 local obfuscate_proto
 obfuscate_proto = function(proto, verbose)
+  math.randomseed(1337)
   if verbose then
     print('Beginning control flow obfuscation...')
   end
@@ -58,6 +59,7 @@ obfuscate_proto = function(proto, verbose)
       end
       new_instructions = _accum_0
     end
+    print(#old_instructions, #new_instructions)
     for i, instruction in ipairs(old_instructions) do
       old_positions[instruction] = i
       local _exp_0 = instruction.OP
@@ -89,24 +91,6 @@ obfuscate_proto = function(proto, verbose)
         end
       end
     end
-    do
-      local a = new_instructions
-      for i = #a - 1, 1, -1 do
-        local _continue_0 = false
-        repeat
-          if closures[i] then
-            _continue_0 = true
-            break
-          end
-          local j = math.random(i)
-          a[i], a[j] = a[j], a[i]
-          _continue_0 = true
-        until true
-        if not _continue_0 then
-          break
-        end
-      end
-    end
     for i = #new_instructions, 1, -1 do
       local _continue_0 = false
       repeat
@@ -132,43 +116,21 @@ obfuscate_proto = function(proto, verbose)
     for i, instruction in pairs(new_instructions) do
       new_positions[instruction], new_positions[i] = i, instruction
     end
-    for i = 0, #new_instructions - 1 do
-      local _continue_0 = false
-      repeat
-        do
-          local instruction = new_instructions[i]
-          if (instruction.OP == opcodes.JMP) and (not jumps[instruction]) then
-            _continue_0 = true
-            break
-          end
-          local _exp_0 = instruction.OP
-          if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
-            assert(false, 'Should not run.')
-            instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
-          elseif opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 or opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
-            local fallthrough, destination
-            do
-              local _obj_0 = jumps[instruction]
-              fallthrough, destination = _obj_0[1], _obj_0[2]
-            end
-            new_instructions[i + 1].Bx = 131070 + new_positions[fallthrough] - (i + 1)
-            new_instructions[i + 2].Bx = 131070 + new_positions[destination] - (i + 2)
-          else
-            local target = new_positions[old_instructions[old_positions[instruction] + 1]]
-            new_instructions[i + 1].Bx = 131071 + target - (i)
-          end
-        end
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
+    for i = 1, #old_instructions - 1 do
+      do
+        local instruction = old_instructions[i]
+        local current_position = new_positions[instruction]
+        local next_instruction_to_execute = old_instructions[i + 1]
+        local jump_target = new_positions[next_instruction_to_execute]
+        print('Current position: ' .. current_position)
+        print('Jumping to position: ' .. jump_target)
+        new_instructions[current_position + 1].Bx = jump_target + 131070 - (current_position + 1)
       end
     end
+    print(new_instructions[0].Bx)
     if verbose then
       print('Old table: ')
-      table_print(old_instructions)
       print('New table:')
-      table_print(new_instructions)
     end
     do
       local p = proto
@@ -186,9 +148,6 @@ return function(proto, verbose)
   do
     local p = proto
     obfuscate_proto(p, verbose)
-    if verbose then
-      table_print(p)
-    end
     return p
   end
 end
