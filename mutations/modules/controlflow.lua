@@ -134,18 +134,42 @@ obfuscate_proto = function(proto, verbose)
     for i, instruction in pairs(new_instructions) do
       new_positions[instruction], new_positions[i] = i, instruction
     end
-    for i = 1, #old_instructions - 1 do
-      do
-        local instruction = old_instructions[i]
-        local current_position = new_positions[instruction]
-        local next_instruction_to_execute = old_instructions[i + 1]
-        local jump_target = new_positions[next_instruction_to_execute]
-        print('Current position: ' .. current_position)
-        print('Jumping to position: ' .. jump_target)
-        new_instructions[current_position + 1].Bx = jump_target + 131070 - (current_position + 1)
+    for i = #new_instructions - 1, 0, -1 do
+      local _continue_0 = false
+      repeat
+        do
+          local instruction = new_instructions[i]
+          if (instruction.OP == opcodes.JMP) and (not jumps[instruction]) then
+            _continue_0 = true
+            break
+          end
+          local _exp_0 = instruction.OP
+          if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
+            assert(false, 'Should not run.')
+            instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
+          elseif opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 or opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
+            assert(false, 'Should not run.')
+            local fallthrough, destination
+            do
+              local _obj_0 = jumps[instruction]
+              fallthrough, destination = _obj_0[1], _obj_0[2]
+            end
+            new_instructions[i + 1].Bx = 131071 + new_positions[fallthrough] - (i + 1)
+            new_instructions[i + 2].Bx = 131071 + new_positions[destination] - (i + 2)
+          else
+            local target = new_positions[old_instructions[old_positions[instruction] + 1]]
+            print(instruction.OP, 'awaaa')
+            print(old_positions[instruction] + 1)
+            print(target, 'New location.')
+            new_instructions[i + 1].Bx = 131071 + (target - (i + 2))
+          end
+        end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
-    print(new_instructions[0].Bx)
     if verbose then
       print('Old table: ')
       print('New table:')
