@@ -93,7 +93,7 @@ obfuscate_proto = (proto, verbose) ->
             print(target, 'New location.')
             new_instructions[i + 1].Bx = 131071 + (target - (i + 2))
 
-    -- new_instructions[0].Bx = 
+    new_instructions[0].Bx = 131071 = new_positions[old_positions[0]] + 131071
 
     if verbose
       print 'Old table: '
