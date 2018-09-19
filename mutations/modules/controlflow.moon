@@ -1,14 +1,17 @@
+-- Known bugs: Does not play well with FORPREPs 
+-- If you run it twice on print(i) for i = 1, 10 you will get a forprep error.
+-- If you try running the forprepifier, it'll break. 
+-- ablobsigh
+
 opcodes = require 'lib.opcodes'
 table_print = require 'lib/table_print'
 
 shift_down_array = (array) -> {k - 1, v for k, v in ipairs array}
 repetitions = (x, scalar) -> scalar * (math.exp(-x * .8) * math.exp(-50 * math.exp(-26 * (x - 0.85))))
-get_jumps = (min = 2, max = 2, scalar = 50, x = math.random()) -> math.min(math.max(min, repetitions(x, 50)), max)
+get_jumps = (min = 5, max = 100, scalar = 70, x = math.random()+0.2) -> math.min(math.max(min, repetitions(x, 50)), max)
 
 -- TODO: if two instructions do the same thing (i.e., two call 0 1 0s, then merge the instructions.)
 obfuscate_proto = (proto, verbose) -> 
-  math.randomseed 1337 
-
   print 'Beginning control flow obfuscation...' if verbose 
 
   process_proto = (proto, verbose) -> 

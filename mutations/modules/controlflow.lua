@@ -15,22 +15,21 @@ end
 local get_jumps
 get_jumps = function(min, max, scalar, x)
   if min == nil then
-    min = 2
+    min = 5
   end
   if max == nil then
-    max = 2
+    max = 100
   end
   if scalar == nil then
-    scalar = 50
+    scalar = 70
   end
   if x == nil then
-    x = math.random()
+    x = math.random() + 0.2
   end
   return math.min(math.max(min, repetitions(x, 50)), max)
 end
 local obfuscate_proto
 obfuscate_proto = function(proto, verbose)
-  math.randomseed(1337)
   if verbose then
     print('Beginning control flow obfuscation...')
   end
