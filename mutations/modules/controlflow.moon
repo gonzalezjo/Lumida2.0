@@ -64,19 +64,13 @@ obfuscate_proto = (proto, verbose) ->
 
         switch instruction.OP
           when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
-            -- assert(false, 'Should not run.')
-
             unless instruction.tampered
-              -- instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
-              assert(jumps[instruction])
-              print(jumps[instruction][1], 'jumpobj')
-              assert(new_positions[jumps[instruction][1]])
-              instruction.Bx = 131071 + new_positions[jumps[instruction][1]] - (i + ((tonumber(instruction.OP) == 32 or tonumber(instruction.OP) == 31) and 1 or 0))
+              instruction.Bx = 131071 + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
+            if instruction.OP == opcodes.FORLOOP or instruction.OP == opcodes.FORPREP 
+              instruction.Bx = 131071 + new_positions[jumps[instruction][1]] - (i + 1)
 
-            -- instruction.Bx = 131071 = new_postiions 
-            -- target = new_positions[old_instructions[old_positions[instruction] + 1]]
-            -- new_instructions[i + 1].Bx = 131071 + (target - (i + 2))              
-            print 'noop'
+            target = new_positions[old_instructions[old_positions[instruction] + 1]]
+            new_instructions[i + 1].Bx = 131071 + (target - (i + 2))              
           when opcodes.EQ, opcodes.LT, opcodes.LE
             {:fallthrough, :destination} = jumps[instruction]
             new_instructions[i + 1].Bx = 131071 + new_positions[fallthrough] - (i + 2)
@@ -104,15 +98,3 @@ obfuscate_proto = (proto, verbose) ->
 (proto, verbose) ->
   with p = proto 
     obfuscate_proto p, verbose
-    -- table_print p if verbose
-
-  -- 1 [1] LOADK     0 -1  ; 1
-  -- 2 [1] LOADK     1 -2  ; 10
-  -- 3 [1] LOADK     2 -1  ; 1
-  -- 4 [1] FORPREP   0 3 ; to 8
-  -- 5 [2] GETGLOBAL 4 -3  ; print
-  -- 6 [2] MOVE      5 3
-  -- 7 [2] CALL      4 2 1
-  -- 8 [1] FORLOOP   0 -4  ; to 5
-  -- 9 [3] RETURN    0 1
-
