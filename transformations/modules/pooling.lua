@@ -6,7 +6,8 @@ local util = require "luaminify.lib.Util"
 local lookupify = util.lookupify
 local stringbuilder = require "lib.stringbuilder"
 local format_beautify = require "transformations.modules.noop_optimized"
-local bit = require 'bit'
+local bit = assert((pcall(require, 'bit') and require 'bit') or (pcall(require, 'bit32') and require 'bit32'), 
+  'No bit library, exiting.')
 local acceptable_letters = {}
 
 for i = ('a'):byte(), ('z'):byte() do 
