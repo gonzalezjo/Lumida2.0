@@ -42,15 +42,15 @@ obfuscate_proto = (proto, verbose) ->
           jumps[instruction] = {old_instructions[i + instruction.Bx - ZERO + 1]}
           print(old_instructions[i + instruction.Bx - ZERO + 1].OP, 'OP')
         when opcodes.CLOSURE
-          instruction.preserve_next = true 
-          closures[i] = true -- possible bug?
-          closures[instruction] = for i = i + 1, #old_instructions
+          instruction.preserve = 0
+          for j = i + 1, #old_instructions
               switch old_instructions[i] -- technically 100% okay, vis a vis code generation of our targets
                 when opcodes.GETUPVAL, opcodes.MOVE, opcodes.ADD, opcodes.SUB, opcodes.MUL, opcodes.DIV 
-                  closures[i] = true
-                  old_instructions[i]
+                  old_instructions[i].preserve = 1
                 else 
+                  old_instructions[i - 1].preserve = nil unless old_instructions[i - 1].preserve == 0
                   break
+
         when opcodes.CALL, opcodes.TAILCALL
           if instruction.C == 0 
             with _ = old_instructions[i + 1]
@@ -67,6 +67,7 @@ obfuscate_proto = (proto, verbose) ->
       continue if new_instructions[i].preserve_next
       for _ = 1, get_jumps!
         proto.sizecode += 1
+        -- proto.sizelineinfo += 1
         table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: ZERO + math.random(-i + 1, #new_instructions - i)
 
     new_instructions = shift_down_array new_instructions
@@ -81,7 +82,7 @@ obfuscate_proto = (proto, verbose) ->
 
         switch instruction.OP
           when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
-            unless instruction.tampered
+            unless instruction.tampered -- is this even needed?
               instruction.Bx = ZERO + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
             if (instruction.OP == opcodes.FORLOOP) or (instruction.OP == opcodes.FORPREP) 
               instruction.Bx = ZERO + new_positions[jumps[instruction][1]] - (i + 1)
@@ -91,7 +92,7 @@ obfuscate_proto = (proto, verbose) ->
           when opcodes.EQ, opcodes.LT, opcodes.LE
             {:fallthrough, :destination} = jumps[instruction]
             new_instructions[i + 1].Bx = ZERO + new_positions[fallthrough] - (i + 2)
-            new_instructions[i + 1].tampered = true
+            new_instructions[i + 1].tampered = true -- pretty sure tamper stuff is unnecessary.
             new_instructions[i + 2].Bx = ZERO + new_positions[destination] - (i + 3)
             new_instructions[i + 2].tampered = true
           when opcodes.TEST, opcodes.TESTSET
@@ -107,7 +108,6 @@ obfuscate_proto = (proto, verbose) ->
               new_instructions[i + 1] = instruction.preserve
               new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
             else 
-              print()
               new_instructions[i + 1].Bx = ZERO
               new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
 
@@ -116,7 +116,7 @@ obfuscate_proto = (proto, verbose) ->
 
     with p = proto 
       process_proto .p[i] for i = 0, .sizep - 1
-      .sizelineinfo = 0
+      .sizelineinfo = .sizecode
       .code = new_instructions
 
   process_proto proto 

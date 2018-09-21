@@ -82,22 +82,17 @@ obfuscate_proto = function(proto, verbose)
         }
         print(old_instructions[i + instruction.Bx - ZERO + 1].OP, 'OP')
       elseif opcodes.CLOSURE == _exp_0 then
-        instruction.preserve_next = true
-        closures[i] = true
-        do
-          local _accum_0 = { }
-          local _len_0 = 1
-          for i = i + 1, #old_instructions do
-            local _exp_1 = old_instructions[i]
-            if opcodes.GETUPVAL == _exp_1 or opcodes.MOVE == _exp_1 or opcodes.ADD == _exp_1 or opcodes.SUB == _exp_1 or opcodes.MUL == _exp_1 or opcodes.DIV == _exp_1 then
-              closures[i] = true
-              _accum_0[_len_0] = old_instructions[i]
-            else
-              break
+        instruction.preserve = 0
+        for j = i + 1, #old_instructions do
+          local _exp_1 = old_instructions[i]
+          if opcodes.GETUPVAL == _exp_1 or opcodes.MOVE == _exp_1 or opcodes.ADD == _exp_1 or opcodes.SUB == _exp_1 or opcodes.MUL == _exp_1 or opcodes.DIV == _exp_1 then
+            old_instructions[i].preserve = 1
+          else
+            if not (old_instructions[i - 1].preserve == 0) then
+              old_instructions[i - 1].preserve = nil
             end
-            _len_0 = _len_0 + 1
+            break
           end
-          closures[instruction] = _accum_0
         end
       elseif opcodes.CALL == _exp_0 or opcodes.TAILCALL == _exp_0 then
         if instruction.C == 0 then
@@ -199,7 +194,6 @@ obfuscate_proto = function(proto, verbose)
               new_instructions[i + 1] = instruction.preserve
               new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
             else
-              print()
               new_instructions[i + 1].Bx = ZERO
               new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
             end
@@ -217,7 +211,7 @@ obfuscate_proto = function(proto, verbose)
       for i = 0, p.sizep - 1 do
         process_proto(p.p[i])
       end
-      p.sizelineinfo = 0
+      p.sizelineinfo = p.sizecode
       p.code = new_instructions
       return p
     end
