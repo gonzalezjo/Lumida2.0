@@ -67,7 +67,6 @@ obfuscate_proto = (proto, verbose) ->
       continue if new_instructions[i].preserve_next
       for _ = 1, get_jumps!
         proto.sizecode += 1
-        -- proto.sizelineinfo += 1
         table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: ZERO + math.random(-i + 1, #new_instructions - i)
 
     new_instructions = shift_down_array new_instructions
@@ -116,7 +115,7 @@ obfuscate_proto = (proto, verbose) ->
 
     with p = proto 
       process_proto .p[i] for i = 0, .sizep - 1
-      .sizelineinfo = .sizecode
+      .sizelineinfo = 0
       .code = new_instructions
 
   process_proto proto 

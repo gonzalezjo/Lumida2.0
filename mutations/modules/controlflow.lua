@@ -211,7 +211,7 @@ obfuscate_proto = function(proto, verbose)
       for i = 0, p.sizep - 1 do
         process_proto(p.p[i])
       end
-      p.sizelineinfo = p.sizecode
+      p.sizelineinfo = 0
       p.code = new_instructions
       return p
     end
