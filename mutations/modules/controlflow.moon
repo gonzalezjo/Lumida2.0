@@ -42,13 +42,13 @@ obfuscate_proto = (proto, verbose) ->
           jumps[instruction] = {old_instructions[i + instruction.Bx - ZERO + 1]}
           print(old_instructions[i + instruction.Bx - ZERO + 1].OP, 'OP')
         when opcodes.CLOSURE
-          instruction.preserve = 0
+          instruction.preserve = true 
           for j = i + 1, #old_instructions
               switch old_instructions[i] -- technically 100% okay, vis a vis code generation of our targets
                 when opcodes.GETUPVAL, opcodes.MOVE, opcodes.ADD, opcodes.SUB, opcodes.MUL, opcodes.DIV 
                   old_instructions[i].preserve = 1
                 else 
-                  old_instructions[i - 1].preserve = nil unless old_instructions[i - 1].preserve == 0
+                  old_instructions[i - 1].preserve = false
                   break
 
         when opcodes.CALL, opcodes.TAILCALL

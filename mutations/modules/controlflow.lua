@@ -82,15 +82,13 @@ obfuscate_proto = function(proto, verbose)
         }
         print(old_instructions[i + instruction.Bx - ZERO + 1].OP, 'OP')
       elseif opcodes.CLOSURE == _exp_0 then
-        instruction.preserve = 0
+        instruction.preserve = true
         for j = i + 1, #old_instructions do
           local _exp_1 = old_instructions[i]
           if opcodes.GETUPVAL == _exp_1 or opcodes.MOVE == _exp_1 or opcodes.ADD == _exp_1 or opcodes.SUB == _exp_1 or opcodes.MUL == _exp_1 or opcodes.DIV == _exp_1 then
             old_instructions[i].preserve = 1
           else
-            if not (old_instructions[i - 1].preserve == 0) then
-              old_instructions[i - 1].preserve = nil
-            end
+            old_instructions[i - 1].preserve = false
             break
           end
         end
