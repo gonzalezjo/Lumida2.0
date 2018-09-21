@@ -39,6 +39,7 @@ obfuscate_proto = function(proto, verbose)
     if verbose then
       print('In process_proto')
     end
+    math.randomseed(ZERO)
     local jumps, closures, old_positions, new_positions = { }, { }, { }, { }
     local old_instructions
     do

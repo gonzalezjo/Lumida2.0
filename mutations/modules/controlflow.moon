@@ -19,6 +19,7 @@ obfuscate_proto = (proto, verbose) ->
 
   process_proto = (proto, verbose) -> 
     print 'In process_proto' if verbose
+    math.randomseed ZERO
 
     jumps, closures, old_positions, new_positions = {}, {}, {}, {} 
     old_instructions = {k + 1, v for k, v in pairs proto.code}
