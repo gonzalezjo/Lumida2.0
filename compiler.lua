@@ -1424,7 +1424,7 @@ do
 		for i = 0, n - 1 do
 			local i = _G.spoof_debug and math.random(0, i) or i
 
-			self:DumpInt(f.lineinfo[i] or 0, D)
+			self:DumpInt(f.lineinfo[i], D)
 		end
 		n = D.strip and 0 or f.sizelocvars            -- dump local information
 		self:DumpInt(n, D)
