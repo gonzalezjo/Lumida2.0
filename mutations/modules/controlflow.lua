@@ -28,7 +28,6 @@ get_jumps = function(min, max, scalar, x)
   end
   return math.min(math.max(min, repetitions(x, 50)), max)
 end
-math.randomseed(1337)
 local obfuscate_proto
 obfuscate_proto = function(proto, verbose)
   local ZERO = 131071
@@ -135,7 +134,7 @@ obfuscate_proto = function(proto, verbose)
           table.insert(new_instructions, i, {
             OP = opcodes.JMP,
             A = 0,
-            Bx = ZERO
+            Bx = ZERO + math.random(-i + 1, #new_instructions - i)
           })
         end
         _continue_0 = true

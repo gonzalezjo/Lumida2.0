@@ -13,7 +13,6 @@ shift_down_array = (array) -> {k - 1, v for k, v in ipairs array}
 repetitions = (x, scalar) -> scalar * (math.exp(-x * .8) * math.exp(-50 * math.exp(-26 * (x - 0.85))))
 get_jumps = (min = 2, max = 2, scalar = 70, x = math.random()+0.2) -> math.min(math.max(min, repetitions(x, 50)), max)
 
-math.randomseed 1337
 obfuscate_proto = (proto, verbose) -> 
   ZERO = 131071
   print 'Beginning control flow obfuscation...' if verbose 
@@ -64,7 +63,7 @@ obfuscate_proto = (proto, verbose) ->
       continue if new_instructions[i].preserve_next
       for _ = 1, get_jumps!
         proto.sizecode += 1
-        table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: ZERO -- + math.random(-i + 1, #new_instructions - i)
+        table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: ZERO + math.random(-i + 1, #new_instructions - i)
 
     new_instructions = shift_down_array new_instructions
 
@@ -79,9 +78,7 @@ obfuscate_proto = (proto, verbose) ->
           when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
             unless instruction.tampered
               instruction.Bx = ZERO + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
-              -- print()
             if (instruction.OP == opcodes.FORLOOP) or (instruction.OP == opcodes.FORPREP) 
-              -- print()
               instruction.Bx = ZERO + new_positions[jumps[instruction][1]] - (i + 1)
 
             target = new_positions[old_instructions[old_positions[instruction] + 1]]
