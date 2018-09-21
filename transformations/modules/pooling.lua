@@ -26,7 +26,12 @@ end
 
 local LENGTH_OF_LETTERS = #acceptable_letters
 
-do 
+local function make_acceptable_names() 
+  if #acceptable_names ~= 0 then 
+    -- lazy loading
+    return 
+  end 
+
   for i = 1e6, 5e6, 16 do 
     local pos = math.floor((i-1e6)/16)+1 
 
@@ -294,6 +299,8 @@ return function(code, ast)
       print("Unknown AST Type: " .. statement.AstType)
     end
   end
+
+  make_acceptable_names()
 
   fixStatList = function(statList)
     for _, stat in pairs(statList.Body) do
