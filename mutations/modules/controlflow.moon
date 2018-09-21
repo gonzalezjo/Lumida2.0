@@ -28,10 +28,14 @@ obfuscate_proto = (proto, verbose) ->
       old_positions[instruction] = i
 
       switch instruction.OP
-        when opcodes.EQ, opcodes.LT, opcodes.LE, opcodes.TEST, opcodes.TESTSET
+        when opcodes.EQ, opcodes.LT, opcodes.LE
           jumps[instruction] = 
-            fallthrough: old_instructions[i + old_instructions[i + 1].Bx - ZERO], 
+            fallthrough: old_instructions[i + old_instructions[i + 1].Bx - ZERO + 1], 
             destination: old_instructions[i + 2]
+        when opcodes.TEST, opcodes.TESTSET
+          jumps[instruction] = 
+            destination: old_instructions[i + old_instructions[i + 1].Bx - ZERO + 1], 
+            fallthrough: old_instructions[i + 2]
         when opcodes.JMP
           jumps[instruction] = {old_instructions[i + instruction.Bx - ZERO]}
         when opcodes.FORPREP, opcodes.FORLOOP
@@ -67,7 +71,8 @@ obfuscate_proto = (proto, verbose) ->
 
     new_instructions = shift_down_array new_instructions
 
-    for i, instruction in pairs new_instructions -- TODO: new_positions:get() can return *a* jump to an instruction: full nesting, bb.
+    -- TODO: new_positions:get() can return *a* jump to an instruction. better if it can recursively follow jumps. full nesting, bb.
+    for i, instruction in pairs new_instructions
       new_positions[instruction], new_positions[i] = i, instruction
 
     for i = #new_instructions - 1, 0, -1
@@ -88,6 +93,7 @@ obfuscate_proto = (proto, verbose) ->
             new_instructions[i + 1].Bx = ZERO + new_positions[fallthrough] - (i + 2)
             new_instructions[i + 1].tampered = true
             new_instructions[i + 2].Bx = ZERO + new_positions[destination] - (i + 3)
+            new_instructions[i + 2].tampered = true
           when opcodes.TEST, opcodes.TESTSET
             {:fallthrough, :destination} = jumps[instruction]
             new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 1)
@@ -101,6 +107,7 @@ obfuscate_proto = (proto, verbose) ->
               new_instructions[i + 1] = instruction.preserve
               new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
             else 
+              print()
               new_instructions[i + 1].Bx = ZERO
               new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
 
@@ -117,3 +124,16 @@ obfuscate_proto = (proto, verbose) ->
 (proto, verbose) ->
   with p = proto 
     obfuscate_proto p, verbose
+
+  -- 1 [1] LOADK     0 -2  ; 7
+  -- 2 [1] SETGLOBAL 0 -1  ; x
+  -- 3 [2] GETGLOBAL 0 -3  ; print
+  -- 4 [2] GETGLOBAL 1 -1  ; x
+  -- 5 [2] LT        0 1 -4  ; - 6
+  -- 6 [2] JMP       3 ; to 10
+  -- 7 [2] LOADK     1 -5  ; 1
+  -- 8 [2] TEST      1 0 1
+  -- 9 [2] JMP       1 ; to 11
+  -- 10  [2] LOADK     1 -6  ; 2
+  -- 11  [2] CALL      0 2 1
+  -- 12  [2] RETURN    0 1

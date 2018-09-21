@@ -62,10 +62,15 @@ obfuscate_proto = function(proto, verbose)
     for i, instruction in ipairs(old_instructions) do
       old_positions[instruction] = i
       local _exp_0 = instruction.OP
-      if opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 or opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
+      if opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
         jumps[instruction] = {
-          fallthrough = old_instructions[i + old_instructions[i + 1].Bx - ZERO],
+          fallthrough = old_instructions[i + old_instructions[i + 1].Bx - ZERO + 1],
           destination = old_instructions[i + 2]
+        }
+      elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
+        jumps[instruction] = {
+          destination = old_instructions[i + old_instructions[i + 1].Bx - ZERO + 1],
+          fallthrough = old_instructions[i + 2]
         }
       elseif opcodes.JMP == _exp_0 then
         jumps[instruction] = {
@@ -177,6 +182,7 @@ obfuscate_proto = function(proto, verbose)
             new_instructions[i + 1].Bx = ZERO + new_positions[fallthrough] - (i + 2)
             new_instructions[i + 1].tampered = true
             new_instructions[i + 2].Bx = ZERO + new_positions[destination] - (i + 3)
+            new_instructions[i + 2].tampered = true
           elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
             local fallthrough, destination
             do
@@ -193,6 +199,7 @@ obfuscate_proto = function(proto, verbose)
               new_instructions[i + 1] = instruction.preserve
               new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
             else
+              print()
               new_instructions[i + 1].Bx = ZERO
               new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
             end
