@@ -1,10 +1,5 @@
--- TODO: if two instructions do the same thing (i.e., two call 0 1 0s, then merge the instructions.)
 -- TODO: Sanity checks for setlist.
-
--- Known bugs: Does not play well with FORPREPs 
--- If you run it twice on print(i) for i = 1, 10 you will get a forprep error.
--- If you try running the forprepifier, it'll break. 
--- ablobsigh
+-- Known bugs: If you try running the forprepifier, it'll break. 
 
 opcodes = require 'lib.opcodes'
 table_print = require 'lib/table_print'
@@ -15,6 +10,7 @@ get_jumps = (min = 2, max = 6, scalar = 70, x = math.random! + 0.2) -> math.min(
 
 obfuscate_proto = (proto, verbose) -> 
   ZERO = 131071
+
   print 'Beginning control flow obfuscation...' if verbose 
 
   process_proto = (proto, verbose) -> 
