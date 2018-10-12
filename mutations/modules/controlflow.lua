@@ -82,7 +82,6 @@ obfuscate_proto = function(proto, verbose)
         jumps[instruction] = old_instructions[i + instruction.Bx - ZERO + 1]
       elseif opcodes.FORPREP == _exp_0 or opcodes.FORLOOP == _exp_0 then
         jumps[instruction] = old_instructions[i + instruction.Bx - ZERO + 1]
-        print(old_instructions[i + instruction.Bx - ZERO + 1].OP, 'OP')
       elseif opcodes.CLOSURE == _exp_0 then
         instruction.preserve = true
         for j = i + 1, #old_instructions do
@@ -99,6 +98,7 @@ obfuscate_proto = function(proto, verbose)
           do
             local succ = old_instructions[i + 1]
             instruction.preserve = succ
+            succ.preserve = true
           end
         end
       end
@@ -167,7 +167,7 @@ obfuscate_proto = function(proto, verbose)
             local _exp_1 = instruction.OP
             if opcodes.FORLOOP == _exp_1 or opcodes.FORPREP == _exp_1 then
               instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
-              local target = new_positions[old_instructions[old_positions[instruction] + 2]]
+              local target = new_positions[old_instructions[old_positions[instruction] + 0]]
               if not (new_instructions[i + 1].preserve_next) then
                 new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
               end

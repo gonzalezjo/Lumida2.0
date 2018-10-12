@@ -45,7 +45,7 @@ obfuscate_proto = (proto, verbose) ->
           jumps[instruction] = old_instructions[i + instruction.Bx - ZERO + 1]
         when opcodes.FORPREP, opcodes.FORLOOP
           jumps[instruction] = old_instructions[i + instruction.Bx - ZERO + 1]
-          print(old_instructions[i + instruction.Bx - ZERO + 1].OP, 'OP')
+          -- print(old_instructions[i + instruction.Bx - ZERO + 1].OP, 'OP')
         when opcodes.CLOSURE
           instruction.preserve = true 
           for j = i + 1, #old_instructions
@@ -59,7 +59,7 @@ obfuscate_proto = (proto, verbose) ->
           if instruction.C == 0 
             with succ = old_instructions[i + 1]
               instruction.preserve = succ
-              -- succ.preserve = true
+              succ.preserve = true
 
     with a = new_instructions -- every day im shuffling :doggodance: 
       for i = #a - 1, 1, -1   
@@ -95,10 +95,10 @@ obfuscate_proto = (proto, verbose) ->
               -- instruction.Bx = ZERO + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
 
             switch instruction.OP 
-              when opcodes.FORLOOP, opcodes.FORPREP  
+              when opcodes.FORLOOP, opcodes.FORPREP -- buggy as heck
                 instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
                 -- possibly not necessary...
-                target = new_positions[old_instructions[old_positions[instruction] + 2]]
+                target = new_positions[old_instructions[old_positions[instruction] + 0]]
                 new_instructions[i + 1].Bx = ZERO + (target - (i + 2)) unless new_instructions[i + 1].preserve_next
               when opcodes.JMP 
                 target = new_positions[jumps[instruction]]
@@ -110,7 +110,7 @@ obfuscate_proto = (proto, verbose) ->
             new_instructions[i + 1].tampered = true -- pretty sure tamper stuff is unnecessary.
             new_instructions[i + 2].Bx = ZERO + new_positions[destination] - (i + 3)
             new_instructions[i + 2].tampered = true
-          when opcodes.TEST, opcodes.TESTSET -- deep thonk
+          when opcodes.TEST, opcodes.TESTSET -- possibly bugged
             {:fallthrough, :destination} = jumps[instruction]
             new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 1) -- probably bad
             new_instructions[i + 1].tampered = true
@@ -118,14 +118,8 @@ obfuscate_proto = (proto, verbose) ->
             new_instructions[i + 2].tampered = true
           when opcodes.TFORLOOP
             {:fallthrough, :destination} = jumps[instruction]
-
-            -- Destination; BAD
             new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
             new_instructions[i + 1].tampered = true
-            -- new_instructions[i + 1].Bx = ZERO + new_positions[jumps[instruction]] - (i + 2)
-            -- new_instructions[i + 1].tampered = true
-
-            -- Fallthrough; OK 
             new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
             new_instructions[i + 2].tampered = true            
           else
@@ -134,8 +128,6 @@ obfuscate_proto = (proto, verbose) ->
             if instruction.preserve and instruction.preserve ~= true 
               new_instructions[i + 1] = instruction.preserve
               new_instructions[i + 2].Bx = ZERO + (target - (i + 2))
-              -- old
-              -- new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
             else
               new_instructions[i + 1].Bx = ZERO + (target - (i + 2)) -- correct.
               new_instructions[i + 2].Bx = ZERO 
@@ -153,28 +145,21 @@ obfuscate_proto = (proto, verbose) ->
   with p = proto 
     obfuscate_proto p, verbose
 
--- 1 [1] NEWTABLE  0 0 0
--- 2 [1] SETGLOBAL 0 -1  ; x
--- 3 [3] GETGLOBAL 0 -2  ; print
--- 4 [3] GETGLOBAL 1 -1  ; x
--- 5 [3] GETTABLE  1 1 -3  ; "k"
--- 6 [3] CALL      0 2 1
--- 7 [5] GETGLOBAL 0 -1  ; x
--- 8 [5] SETTABLE  0 -3 -4 ; "k" 5
--- 9 [7] GETGLOBAL 0 -2  ; print
--- 10  [7] GETGLOBAL 1 -1  ; x
--- 11  [7] GETTABLE  1 1 -3  ; "k"
--- 12  [7] CALL      0 2 1
--- 13  [9] GETGLOBAL 0 -5  ; pairs
--- 14  [9] GETGLOBAL 1 -1  ; x
--- 15  [9] CALL      0 2 4
--- 16  [9] JMP       4 ; to 21
--- 17  [10]  GETGLOBAL 5 -2  ; print
--- 18  [10]  MOVE      6 3
--- 19  [10]  MOVE      7 4
--- 20  [10]  CALL      5 3 1
--- 21  [9] TFORLOOP  0 2
--- 22  [10]  JMP       -6  ; to 17
--- 23  [11]  RETURN    0 1
+-- [01] loadk      0   0        ; 1
+-- [02] loadk      1   1        ; 2
+-- [03] loadk      2   0        ; 1
+-- [04] forprep    0   10       ; to [15]
+-- [05] loadk      4   2        ; 3
+-- [06] loadk      5   3        ; 4
+-- [07] loadk      6   0        ; 1
+-- [08] forprep    4   5        ; to [14]
+-- [09] getglobal  8   4        ; print
+-- [10] loadk      9   5        ; "foo"
+-- [11] move       10  7      
+-- [12] loadk      11  6        ; "bar"
+-- [13] call       8   4   1  
+-- [14] forloop    4   -6       ; to [9] if loop
+-- [15] forloop    0   -11      ; to [5] if loop
+-- [16] return     0   1      
 
--- getglobal that is important is #21 in compiled.
+-- 42 is firstforprep 
