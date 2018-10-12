@@ -18,7 +18,7 @@ get_jumps = function(min, max, scalar, x)
     min = 2
   end
   if max == nil then
-    max = 12
+    max = 6
   end
   if scalar == nil then
     scalar = 70
@@ -39,7 +39,6 @@ obfuscate_proto = function(proto, verbose)
     if verbose then
       print('In process_proto')
     end
-    math.randomseed(ZERO)
     local jumps, closures, old_positions, new_positions = { }, { }, { }, { }
     local old_instructions
     do
@@ -65,8 +64,8 @@ obfuscate_proto = function(proto, verbose)
       local _exp_0 = instruction.OP
       if opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
         jumps[instruction] = {
-          fallthrough = old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2],
-          destination = old_instructions[i + 2]
+          destination = old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2],
+          fallthrough = old_instructions[i + 2]
         }
       elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 or opcodes.TFORLOOP == _exp_0 then
         jumps[instruction] = {
@@ -150,52 +149,24 @@ obfuscate_proto = function(proto, verbose)
           end
           local _exp_0 = instruction.OP
           if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
-            if not (instruction.tampered) then
-              instruction.Bx = ZERO
-            end
+            instruction.Bx = ZERO
             local _exp_1 = instruction.OP
             if opcodes.FORLOOP == _exp_1 or opcodes.FORPREP == _exp_1 then
               local target = new_positions[old_instructions[old_positions[instruction] + 1]]
               instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
-              if not (new_instructions[i + 1].preserve_next) then
-                new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-              end
+              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
             elseif opcodes.JMP == _exp_1 then
               local target = new_positions[jumps[instruction]]
-              if not (new_instructions[i + 1].preserve_next) then
-                new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-              end
+              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
             end
-          elseif opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
-            local fallthrough, destination
-            do
-              local _obj_0 = jumps[instruction]
-              fallthrough, destination = _obj_0.fallthrough, _obj_0.destination
-            end
-            new_instructions[i + 1].Bx = ZERO + new_positions[fallthrough] - (i + 2)
-            new_instructions[i + 1].tampered = true
-            new_instructions[i + 2].Bx = ZERO + new_positions[destination] - (i + 3)
-            new_instructions[i + 2].tampered = true
-          elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 then
+          elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 or opcodes.TFORLOOP == _exp_0 or opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
             local fallthrough, destination
             do
               local _obj_0 = jumps[instruction]
               fallthrough, destination = _obj_0.fallthrough, _obj_0.destination
             end
             new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
-            new_instructions[i + 1].tampered = true
             new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
-            new_instructions[i + 2].tampered = true
-          elseif opcodes.TFORLOOP == _exp_0 then
-            local fallthrough, destination
-            do
-              local _obj_0 = jumps[instruction]
-              fallthrough, destination = _obj_0.fallthrough, _obj_0.destination
-            end
-            new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
-            new_instructions[i + 1].tampered = true
-            new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
-            new_instructions[i + 2].tampered = true
           else
             local target = new_positions[old_instructions[old_positions[instruction] + 1]]
             if instruction.preserve and instruction.preserve ~= true then

@@ -11,7 +11,7 @@ table_print = require 'lib/table_print'
 
 shift_down_array = (array) -> {k - 1, v for k, v in ipairs array}
 repetitions = (x, scalar) -> scalar * (math.exp(-x * .8) * math.exp(-50 * math.exp(-26 * (x - 0.85))))
-get_jumps = (min = 2, max = 12, scalar = 70, x = math.random()+0.2) -> math.min(math.max(min, repetitions(x, 50)), max)
+get_jumps = (min = 2, max = 6, scalar = 70, x = math.random! + 0.2) -> math.min(math.max(min, repetitions(x, 50)), max) -- EVD
 
 obfuscate_proto = (proto, verbose) -> 
   ZERO = 131071
@@ -19,7 +19,6 @@ obfuscate_proto = (proto, verbose) ->
 
   process_proto = (proto, verbose) -> 
     print 'In process_proto' if verbose
-    math.randomseed ZERO
 
     jumps, closures, old_positions, new_positions = {}, {}, {}, {} 
     old_instructions = {k + 1, v for k, v in pairs proto.code}
@@ -31,8 +30,8 @@ obfuscate_proto = (proto, verbose) ->
       switch instruction.OP
         when opcodes.EQ, opcodes.LT, opcodes.LE
           jumps[instruction] = 
-            fallthrough: old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2], 
-            destination: old_instructions[i + 2]
+            destination: old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2], 
+            fallthrough: old_instructions[i + 2]
         when opcodes.TEST, opcodes.TESTSET, opcodes.TFORLOOP
           jumps[instruction] = 
             destination: old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2],
@@ -52,7 +51,7 @@ obfuscate_proto = (proto, verbose) ->
           if instruction.C == 0 
             with succ = old_instructions[i + 1]
               instruction.preserve = succ
-              succ.preserve = true
+              succ.preserve = true -- should make the meaning of true more explicit.
 
     with a = new_instructions -- every day im shuffling :doggodance: 
       for i = #a - 1, 1, -1   
@@ -64,7 +63,7 @@ obfuscate_proto = (proto, verbose) ->
       continue if new_instructions[i].preserve_next
       for _ = 1, get_jumps!
         proto.sizecode += 1
-        table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: ZERO + math.random(-i + 1, #new_instructions - i)
+        table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: ZERO + math.random -i + 1, #new_instructions - i
 
     new_instructions = shift_down_array new_instructions
 
@@ -78,45 +77,28 @@ obfuscate_proto = (proto, verbose) ->
 
         switch instruction.OP
           when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
-            unless instruction.tampered -- is this even needed? affects the buggy instruction. 
-              instruction.Bx = ZERO -- + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
+            instruction.Bx = ZERO -- presumably you can mess with this. i didn't. you can.
 
             switch instruction.OP 
-              -- can hoist the unless UP...
               when opcodes.FORLOOP, opcodes.FORPREP
-                target = new_positions[old_instructions[old_positions[instruction] + 1]]
-                instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1) -- OK
-                new_instructions[i + 1].Bx = ZERO + (target - (i + 2)) unless new_instructions[i + 1].preserve_next
+                target = new_positions[old_instructions[old_positions[instruction] + 1]] -- can simplify to jumps lookup
+                instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
+                new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
               when opcodes.JMP 
                 target = new_positions[jumps[instruction]]
-                new_instructions[i + 1].Bx = ZERO + (target - (i + 2)) unless new_instructions[i + 1].preserve_next
-
-          when opcodes.EQ, opcodes.LT, opcodes.LE
-            {:fallthrough, :destination} = jumps[instruction]
-            new_instructions[i + 1].Bx = ZERO + new_positions[fallthrough] - (i + 2)
-            new_instructions[i + 1].tampered = true -- pretty sure tamper stuff is unnecessary.
-            new_instructions[i + 2].Bx = ZERO + new_positions[destination] - (i + 3)
-            new_instructions[i + 2].tampered = true
-          when opcodes.TEST, opcodes.TESTSET -- possibly bugged
+                new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+          when opcodes.TEST, opcodes.TESTSET, opcodes.TFORLOOP, opcodes.EQ, opcodes.LT, opcodes.LE
             {:fallthrough, :destination} = jumps[instruction]
             new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
-            new_instructions[i + 1].tampered = true
             new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
-            new_instructions[i + 2].tampered = true
-          when opcodes.TFORLOOP
-            {:fallthrough, :destination} = jumps[instruction]
-            new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
-            new_instructions[i + 1].tampered = true
-            new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
-            new_instructions[i + 2].tampered = true            
           else
-            target = new_positions[old_instructions[old_positions[instruction] + 1]]
+            target = new_positions[old_instructions[old_positions[instruction] + 1]] -- can use jumps...
 
             if instruction.preserve and instruction.preserve ~= true 
               new_instructions[i + 1] = instruction.preserve
               new_instructions[i + 2].Bx = ZERO + (target - (i + 2))
             else
-              new_instructions[i + 1].Bx = ZERO + (target - (i + 2)) -- correct.
+              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
               new_instructions[i + 2].Bx = ZERO 
 
     new_instructions[0].Bx = ZERO + new_positions[old_instructions[1]] - 1
