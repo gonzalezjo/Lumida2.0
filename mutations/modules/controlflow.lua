@@ -73,14 +73,15 @@ obfuscate_proto = function(proto, verbose)
           destination = old_instructions[i + old_instructions[i + 1].Bx - ZERO + 1],
           fallthrough = old_instructions[i + 2]
         }
+      elseif opcodes.TFORLOOP == _exp_0 then
+        jumps[instruction] = {
+          destination = old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2],
+          fallthrough = old_instructions[i + 2]
+        }
       elseif opcodes.JMP == _exp_0 then
-        jumps[instruction] = {
-          old_instructions[i + instruction.Bx - ZERO]
-        }
+        jumps[instruction] = old_instructions[i + instruction.Bx - ZERO + 1]
       elseif opcodes.FORPREP == _exp_0 or opcodes.FORLOOP == _exp_0 then
-        jumps[instruction] = {
-          old_instructions[i + instruction.Bx - ZERO + 1]
-        }
+        jumps[instruction] = old_instructions[i + instruction.Bx - ZERO + 1]
         print(old_instructions[i + instruction.Bx - ZERO + 1].OP, 'OP')
       elseif opcodes.CLOSURE == _exp_0 then
         instruction.preserve = true
@@ -93,12 +94,11 @@ obfuscate_proto = function(proto, verbose)
             break
           end
         end
-      elseif opcodes.CALL == _exp_0 or opcodes.TAILCALL == _exp_0 then
+      elseif opcodes.CALL == _exp_0 or opcodes.TAILCALL == _exp_0 or opcodes.VARARG == _exp_0 then
         if instruction.C == 0 then
           do
-            local _ = old_instructions[i + 1]
-            instruction.preserve = _
-            _.preserve = true
+            local succ = old_instructions[i + 1]
+            instruction.preserve = succ
           end
         end
       end
@@ -133,7 +133,7 @@ obfuscate_proto = function(proto, verbose)
           table.insert(new_instructions, i, {
             OP = opcodes.JMP,
             A = 0,
-            Bx = ZERO + math.random(-i + 1, #new_instructions - i)
+            Bx = ZERO
           })
         end
         _continue_0 = true
@@ -155,17 +155,27 @@ obfuscate_proto = function(proto, verbose)
             _continue_0 = true
             break
           end
+          if instruction.skip then
+            _continue_0 = true
+            break
+          end
           local _exp_0 = instruction.OP
           if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
             if not (instruction.tampered) then
-              instruction.Bx = ZERO + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
+              instruction.Bx = ZERO
             end
-            if (instruction.OP == opcodes.FORLOOP) or (instruction.OP == opcodes.FORPREP) then
-              instruction.Bx = ZERO + new_positions[jumps[instruction][1]] - (i + 1)
-            end
-            local target = new_positions[old_instructions[old_positions[instruction] + 1]]
-            if not (new_instructions[i + 1].preserve_next) then
-              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+            local _exp_1 = instruction.OP
+            if opcodes.FORLOOP == _exp_1 or opcodes.FORPREP == _exp_1 then
+              instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
+              local target = new_positions[old_instructions[old_positions[instruction] + 2]]
+              if not (new_instructions[i + 1].preserve_next) then
+                new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+              end
+            elseif opcodes.JMP == _exp_1 then
+              local target = new_positions[jumps[instruction]]
+              if not (new_instructions[i + 1].preserve_next) then
+                new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+              end
             end
           elseif opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
             local fallthrough, destination
@@ -187,14 +197,24 @@ obfuscate_proto = function(proto, verbose)
             new_instructions[i + 1].tampered = true
             new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 2)
             new_instructions[i + 2].tampered = true
+          elseif opcodes.TFORLOOP == _exp_0 then
+            local fallthrough, destination
+            do
+              local _obj_0 = jumps[instruction]
+              fallthrough, destination = _obj_0.fallthrough, _obj_0.destination
+            end
+            new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
+            new_instructions[i + 1].tampered = true
+            new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
+            new_instructions[i + 2].tampered = true
           else
             local target = new_positions[old_instructions[old_positions[instruction] + 1]]
             if instruction.preserve and instruction.preserve ~= true then
               new_instructions[i + 1] = instruction.preserve
-              new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
+              new_instructions[i + 2].Bx = ZERO + (target - (i + 2))
             else
-              new_instructions[i + 1].Bx = ZERO
-              new_instructions[i + 2].Bx = ZERO + (target - (i + 3))
+              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+              new_instructions[i + 2].Bx = ZERO
             end
           end
         end
