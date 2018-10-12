@@ -55,8 +55,9 @@ do
 
   local verbose = arguments.verbose
 
-  if 
-    not arguments.no_transformations and 
+  if
+    not arguments.no_transformations and -- where it breaks..
+    -- (function() print 'hi' return true end)() and 
     arguments.transformations and 
     #arguments.transformations > 0 then 
 

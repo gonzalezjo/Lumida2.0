@@ -76,7 +76,7 @@ obfuscate_proto = (proto, verbose) ->
     new_instructions = shift_down_array new_instructions
 
     -- TODO: new_positions:get() can return *a* jump to an instruction. better if it can recursively follow jumps. full nesting, bb.
-    -- TODO: Test test, testset, tforloop.
+    -- TODO: Test test, testset
     for i, instruction in pairs new_instructions
       new_positions[instruction], new_positions[i] = i, instruction
 
@@ -88,17 +88,14 @@ obfuscate_proto = (proto, verbose) ->
         switch instruction.OP
           when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
             unless instruction.tampered -- is this even needed? affects the buggy instruction. 
-              -- old: 
-              -- instruction.Bx = ZERO + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
-              -- new: 
               instruction.Bx = ZERO -- + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
-              -- instruction.Bx = ZERO + new_positions[old_instructions[old_positions[instruction] + 1]] - (i + 1)
 
             switch instruction.OP 
+              -- can hoist the unless UP...
               when opcodes.FORLOOP, opcodes.FORPREP -- buggy as heck
-                instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
-                -- possibly not necessary...
-                target = new_positions[old_instructions[old_positions[instruction] + 0]]
+                target = new_positions[old_instructions[old_positions[instruction] + 1]]
+                instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1) -- OK
+                -- also okay, though the unless may be unnecessary.
                 new_instructions[i + 1].Bx = ZERO + (target - (i + 2)) unless new_instructions[i + 1].preserve_next
               when opcodes.JMP 
                 target = new_positions[jumps[instruction]]
@@ -110,7 +107,7 @@ obfuscate_proto = (proto, verbose) ->
             new_instructions[i + 1].tampered = true -- pretty sure tamper stuff is unnecessary.
             new_instructions[i + 2].Bx = ZERO + new_positions[destination] - (i + 3)
             new_instructions[i + 2].tampered = true
-          when opcodes.TEST, opcodes.TESTSET -- possibly bugged
+          when opcodes.TEST, opcodes.TESTSET -- possibly bugge d
             {:fallthrough, :destination} = jumps[instruction]
             new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 1) -- probably bad
             new_instructions[i + 1].tampered = true
@@ -145,21 +142,28 @@ obfuscate_proto = (proto, verbose) ->
   with p = proto 
     obfuscate_proto p, verbose
 
--- [01] loadk      0   0        ; 1
--- [02] loadk      1   1        ; 2
--- [03] loadk      2   0        ; 1
--- [04] forprep    0   10       ; to [15]
--- [05] loadk      4   2        ; 3
--- [06] loadk      5   3        ; 4
--- [07] loadk      6   0        ; 1
--- [08] forprep    4   5        ; to [14]
--- [09] getglobal  8   4        ; print
--- [10] loadk      9   5        ; "foo"
--- [11] move       10  7      
--- [12] loadk      11  6        ; "bar"
--- [13] call       8   4   1  
--- [14] forloop    4   -6       ; to [9] if loop
--- [15] forloop    0   -11      ; to [5] if loop
--- [16] return     0   1      
+-- [01] loadk      0   0        ; 64321
+-- [02] loadk      1   1        ; 64319
+-- [03] loadk      2   2        ; -1
+-- [04] forprep    0   17       ; to [22]
+-- [05] loadk      4   3        ; 1337
+-- [06] loadk      5   4        ; 1339
+-- [07] loadk      6   5        ; 1
+-- [08] forprep    4   12       ; to [21]
+-- [09] loadk      8   6        ; 3
+-- [10] loadk      9   7        ; 4
+-- [11] loadk      10  5        ; 1
+-- [12] forprep    8   7        ; to [20]
+-- [13] getglobal  12  8        ; print
+-- [14] loadk      13  9        ; "foo"
+-- [15] move       14  3      
+-- [16] move       15  7      
+-- [17] move       16  11     
+-- [18] loadk      17  10       ; "bar"
+-- [19] call       12  6   1  
+-- [20] forloop    8   -8       ; to [13] if loop
+-- [21] forloop    4   -13      ; to [9] if loop
+-- [22] forloop    0   -18      ; to [5] if loop
+-- [23] return     0   1      
 
 -- 42 is firstforprep 
