@@ -5,8 +5,9 @@ local parselua = parser.ParseLua
 local util = require "luaminify.lib.Util"
 local lookupify = util.lookupify
 local stringbuilder = require "lib.stringbuilder"
-local format_beautify = require "transformations.modules.noop"
-local bit = require 'bit'
+local format_beautify = require "transformations.modules.noop_optimized"
+local bit = assert((pcall(require, 'bit') and require 'bit') or (pcall(require, 'bit32') and require 'bit32'), 
+  'No bit library, exiting.')
 local acceptable_letters = {}
 
 for i = ('a'):byte(), ('z'):byte() do 
@@ -25,7 +26,12 @@ end
 
 local LENGTH_OF_LETTERS = #acceptable_letters
 
-do 
+local function make_acceptable_names() 
+  if #acceptable_names ~= 0 then 
+    -- lazy loading
+    return 
+  end 
+
   for i = 1e6, 5e6, 16 do 
     local pos = math.floor((i-1e6)/16)+1 
 
@@ -95,7 +101,7 @@ return function(code, ast)
   local function insertConstant(v, index, type)
     table.insert(
       constantPoolAstNode.EntryList,
-      math.random(#constantPoolAstNode.EntryList),
+      #constantPoolAstNode.EntryList == 0 and 1 or math.random(#constantPoolAstNode.EntryList),
       {
         Type = "Key",
         Value = {AstType = type or "StringExpr", Value = v},
@@ -293,6 +299,8 @@ return function(code, ast)
       print("Unknown AST Type: " .. statement.AstType)
     end
   end
+
+  make_acceptable_names()
 
   fixStatList = function(statList)
     for _, stat in pairs(statList.Body) do

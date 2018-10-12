@@ -1,0 +1,1 @@
+_G.getfenv().print('Hello world.')
