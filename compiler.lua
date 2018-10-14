@@ -1186,14 +1186,16 @@ do
 	-- * returns the writer function and a table containing the string
 	-- * to get the final result, look in buff.data
 	------------------------------------------------------------------------
+	local stringbuilder = require 'lib.stringbuilder'
 	function luaU:make_setS()
 		local buff = {}
-					buff.data = ""
+					buff.data = {}
+		local size = 0
 		local writer =
 			function(s, buff)  -- chunk writer
 				if not s then return 0 end
-				buff.data = buff.data..s
-	-- print (#buff.data, #s, string.byte(s,1,1), s)
+				size = size + 1
+				buff.data[size] = s
 				return 0
 			end
 		return writer, buff
@@ -4303,7 +4305,7 @@ do
 		luaU:dump(LuaState, func, writer, buff)
 		-- a string.dump equivalent in returned
 
-		return buff.data
+		return table.concat(buff.data)
 	end
 	
 	function compile_to_proto(source, name)
@@ -4317,7 +4319,7 @@ do
 		local writer, buff = luaU:make_setS()
 		-- luaU:dump builds a binary chunk
 		luaU:dump(LuaState, func, writer, buff)
-		return buff.data
+		return table.concat(buff.data)
 	end
 
 
