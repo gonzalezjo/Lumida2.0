@@ -18,7 +18,7 @@ A Lua 5.1 obfuscator that focuses on a combination of low-level, bytecode-based 
 * Control flow obfuscation
 
 
-* (WIP) JMP -> forprep conversion
+* (WIP) OP_JMP -> OP_FORPREP conversion
 
 
 ## Source Code Transformations 
