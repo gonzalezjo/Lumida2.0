@@ -26,18 +26,18 @@ obfuscate_proto = (proto, verbose) ->
       switch instruction.OP
         when opcodes.EQ, opcodes.LT, opcodes.LE
           jumps[instruction] = 
-            destination: old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2], 
-            fallthrough: old_instructions[i + 2]
+            destination: old_instructions[(i + 2) + (old_instructions[i + 1].Bx - ZERO)], 
+            fallthrough: old_instructions[(i + 2)]
         when opcodes.TEST, opcodes.TESTSET, opcodes.TFORLOOP
           jumps[instruction] = 
-            destination: old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2],
-            fallthrough: old_instructions[i + 2]
+            destination: old_instructions[(i + 2) + (old_instructions[i + 1].Bx - ZERO)],
+            fallthrough: old_instructions[(i + 2)]
         when opcodes.JMP, opcodes.FORPREP, opcodes.FORLOOP
-          jumps[instruction] = old_instructions[i + instruction.Bx - ZERO + 1]
+          jumps[instruction] = old_instructions[(i + 1) + (instruction.Bx - ZERO)]
         when opcodes.CLOSURE
           instruction.preserve = true 
           for j = i + 1, #old_instructions
-              switch old_instructions[i] -- technically 100% okay, vis a vis code generation of our targets
+              switch old_instructions[i]
                 when opcodes.GETUPVAL, opcodes.MOVE, opcodes.ADD, opcodes.SUB, opcodes.MUL, opcodes.DIV 
                   old_instructions[i].preserve = 1
                 else 
@@ -47,9 +47,9 @@ obfuscate_proto = (proto, verbose) ->
           if instruction.C == 0 
             with succ = old_instructions[i + 1]
               instruction.preserve = succ
-              succ.preserve = true -- should make the meaning of true more explicit.
+              succ.preserve = true
 
-    with a = new_instructions -- every day im shuffling :doggodance: 
+    with a = new_instructions
       for i = #a - 1, 1, -1   
         j = math.random i
         continue if a[i].preserve or a[j].preserve 
