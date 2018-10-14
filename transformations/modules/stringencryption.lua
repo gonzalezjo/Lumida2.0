@@ -38,7 +38,7 @@ local function Format_Beautify(code, verbose)
 
   end
 
-  for i = 1, 190 do 
+  for i = 1, 10 do 
     add_to_alphabet()
   end
 
@@ -218,7 +218,6 @@ local function Format_Beautify(code, verbose)
   local formatStatement = function(statement)
     local out = stringbuilder()
     if statement.AstType == 'AssignmentStatement' then
-      out = getIndentation()
       for i = 1, #statement.Lhs do
         out = out..formatExpr(statement.Lhs[i])
         if i ~= #statement.Lhs then

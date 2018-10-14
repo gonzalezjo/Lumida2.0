@@ -53,6 +53,8 @@ end
 
 local formatStatlist
 return function(code, ast)  
+  make_acceptable_names()
+
   local function getRandomName()
     return table.remove(acceptable_names, math.random(#acceptable_names))
   end
@@ -299,8 +301,6 @@ return function(code, ast)
       print("Unknown AST Type: " .. statement.AstType)
     end
   end
-
-  make_acceptable_names()
 
   fixStatList = function(statList)
     for _, stat in pairs(statList.Body) do

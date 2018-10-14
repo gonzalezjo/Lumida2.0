@@ -180,7 +180,6 @@ local function Format_Beautify(code, verbose)
     local out = stringbuilder()
 
     if statement.AstType == 'AssignmentStatement' then
-      out = getIndentation()
       for i = 1, #statement.Lhs do
         out = out..formatExpr(statement.Lhs[i])
         if i ~= #statement.Lhs then
