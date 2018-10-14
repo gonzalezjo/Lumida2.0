@@ -64,16 +64,16 @@ obfuscate_proto = function(proto, verbose)
       local _exp_0 = instruction.OP
       if opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
         jumps[instruction] = {
-          destination = old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2],
-          fallthrough = old_instructions[i + 2]
+          destination = old_instructions[(i + 2) + (old_instructions[i + 1].Bx - ZERO)],
+          fallthrough = old_instructions[(i + 2)]
         }
       elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 or opcodes.TFORLOOP == _exp_0 then
         jumps[instruction] = {
-          destination = old_instructions[i + old_instructions[i + 1].Bx - ZERO + 2],
-          fallthrough = old_instructions[i + 2]
+          destination = old_instructions[(i + 2) + (old_instructions[i + 1].Bx - ZERO)],
+          fallthrough = old_instructions[(i + 2)]
         }
       elseif opcodes.JMP == _exp_0 or opcodes.FORPREP == _exp_0 or opcodes.FORLOOP == _exp_0 then
-        jumps[instruction] = old_instructions[i + instruction.Bx - ZERO + 1]
+        jumps[instruction] = old_instructions[(i + 1) + (instruction.Bx - ZERO)]
       elseif opcodes.CLOSURE == _exp_0 then
         instruction.preserve = true
         for j = i + 1, #old_instructions do
@@ -85,7 +85,7 @@ obfuscate_proto = function(proto, verbose)
             break
           end
         end
-      elseif opcodes.CALL == _exp_0 or opcodes.TAILCALL == _exp_0 or opcodes.VARARG == _exp_0 or opcodes.LOADBOOL == _exp_0 then
+      elseif opcodes.CALL == _exp_0 or opcodes.TAILCALL == _exp_0 or opcodes.VARARG == _exp_0 or opcodes.LOADBOOL == _exp_0 or opcodes.SETLIST == _exp_0 then
         if instruction.C == 0 then
           do
             local succ = old_instructions[i + 1]
@@ -114,12 +114,7 @@ obfuscate_proto = function(proto, verbose)
       end
     end
     for i = #new_instructions, 1, -1 do
-      local _continue_0 = false
-      repeat
-        if new_instructions[i].preserve_next then
-          _continue_0 = true
-          break
-        end
+      if not new_instructions[i].preserve_next then
         for _ = 1, get_jumps() do
           proto.sizecode = proto.sizecode + 1
           table.insert(new_instructions, i, {
@@ -128,10 +123,6 @@ obfuscate_proto = function(proto, verbose)
             Bx = ZERO + math.random(-i + 1, #new_instructions - i)
           })
         end
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
       end
     end
     new_instructions = shift_down_array(new_instructions)

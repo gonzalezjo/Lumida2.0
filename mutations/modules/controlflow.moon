@@ -56,10 +56,10 @@ obfuscate_proto = (proto, verbose) ->
         a[i], a[j] = a[j], a[i]
 
     for i = #new_instructions, 1, -1
-      continue if new_instructions[i].preserve_next
-      for _ = 1, get_jumps!
-        proto.sizecode += 1
-        table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: ZERO + math.random -i + 1, #new_instructions - i
+      if not new_instructions[i].preserve_next
+        for _ = 1, get_jumps!
+          proto.sizecode += 1
+          table.insert new_instructions, i, OP: opcodes.JMP, A: 0, Bx: ZERO + math.random -i + 1, #new_instructions - i
 
     new_instructions = shift_down_array new_instructions
 
