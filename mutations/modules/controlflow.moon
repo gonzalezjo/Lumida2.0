@@ -37,19 +37,19 @@ obfuscate_proto = (proto, verbose) ->
         when opcodes.CLOSURE
           instruction.preserve = true 
           for j = i + 1, #old_instructions
-              switch old_instructions[i]
-                when opcodes.GETUPVAL, opcodes.MOVE, opcodes.ADD, opcodes.SUB, opcodes.MUL, opcodes.DIV 
+              switch old_instructions[i] -- i convinced myself this was fine a while ago. heh
+                when opcodes.GETUPVAL, opcodes.MOVE, opcodes.ADD, opcodes.SUB, opcodes.MUL, opcodes.DIV
                   old_instructions[i].preserve = 1
                 else 
                   old_instructions[i - 1].preserve = false
                   break
-        when opcodes.CALL, opcodes.TAILCALL, opcodes.VARARG, opcodes.LOADBOOL
+        when opcodes.CALL, opcodes.TAILCALL, opcodes.VARARG, opcodes.LOADBOOL, opcodes.SETLIST
           if instruction.C == 0 
             with succ = old_instructions[i + 1]
               instruction.preserve = succ
               succ.preserve = true
 
-    with a = new_instructions
+    with a = new_instructions -- shuffles... :doggodance: 
       for i = #a - 1, 1, -1   
         j = math.random i
         continue if a[i].preserve or a[j].preserve 
@@ -106,6 +106,6 @@ obfuscate_proto = (proto, verbose) ->
 
   process_proto proto 
 
-(proto, verbose) ->
+(proto, verbose) -> 
   with p = proto 
     obfuscate_proto p, verbose
