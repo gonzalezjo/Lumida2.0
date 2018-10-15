@@ -171,6 +171,7 @@ obfuscate_proto = function(proto, verbose)
       end
       old_instructions = _tbl_0
     end
+    proto.code = nil
     local new_instructions
     do
       local _accum_0 = { }

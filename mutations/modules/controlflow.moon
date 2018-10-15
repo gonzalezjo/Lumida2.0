@@ -105,6 +105,7 @@ obfuscate_proto = (proto, verbose) ->
 
     jumps, old_positions, new_positions = {}, {}, {} 
     old_instructions = {k + 1, v for k, v in pairs proto.code}
+    proto.code = nil
     new_instructions = [v for v in *old_instructions] 
 
     populate_metadata old_instructions, old_positions, jumps
