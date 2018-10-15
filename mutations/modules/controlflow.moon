@@ -42,20 +42,22 @@ shuffle = (array) ->
       a[i], a[j] = a[j], a[i]
 
 add_jumps = (new_instructions, proto) ->
-  replacement, i = {}, 1
-  
+  replacement, len = {}, #new_instructions
+
   for i = 1, #new_instructions
     instruction = new_instructions[i]
 
     if not instruction.preserve_next
       for _ = 1, get_jumps!
-        table.insert replacement, OP: opcodes.JMP, A: 0, Bx: ZERO + math.random -i + 1, #new_instructions - i
-        proto.sizecode += 1
+        table.insert replacement, 
+          OP: opcodes.JMP
+          A: 0
+          Bx: ZERO + math.random -i + 1, len - i - 1
 
     table.insert replacement, instruction
 
-  new_instructions[k] = v for k, v in pairs replacement
-
+  for i, v in ipairs replacement
+    new_instructions[i] = v 
 
 populate_translation_tables = (new_instructions, new_positions) -> 
   for i, instruction in pairs new_instructions
@@ -64,36 +66,34 @@ populate_translation_tables = (new_instructions, new_positions) ->
 translate_instructions = (args) -> 
   {:new_instructions, :new_positions, 
    :old_positions, :old_instructions, :jumps} = args
+  sizecode = #new_instructions
 
-  for i = #new_instructions - 1, 0, -1 
+  for i = sizecode - 1, 0, -1 
     with instruction = new_instructions[i]
-      continue if (instruction.OP == opcodes.JMP) and (not jumps[instruction]) -- skip jumps that weren't generated
+      unless (instruction.OP == opcodes.JMP) and (not jumps[instruction]) -- skip jumps that weren't generated
+        switch instruction.OP
+          when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
+            instruction.Bx = ZERO
+            target = new_positions[jumps[instruction]]
 
-      switch instruction.OP
-        when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
-          instruction.Bx = ZERO -- presumably you can mess with this. i didn't. you can.
-
-          switch instruction.OP 
-            when opcodes.FORLOOP, opcodes.FORPREP
-              target = new_positions[old_instructions[old_positions[instruction] + 1]] -- can simplify to jumps lookup
+            if instruction.OP ~= opcodes.JMP
               instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
-              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-            when opcodes.JMP 
-              target = new_positions[jumps[instruction]]
-              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-        when opcodes.TEST, opcodes.TESTSET, opcodes.TFORLOOP, opcodes.EQ, opcodes.LT, opcodes.LE
-          {:fallthrough, :destination} = jumps[instruction]
-          new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
-          new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
-        else
-          target = new_positions[old_instructions[old_positions[instruction] + 1]] -- can use jumps...
 
-          if instruction.preserve and instruction.preserve ~= true 
-            new_instructions[i + 1] = instruction.preserve
-            new_instructions[i + 2].Bx = ZERO + (target - (i + 2))
-          else
             new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-            new_instructions[i + 2].Bx = ZERO 
+          when opcodes.TEST, opcodes.TESTSET, opcodes.TFORLOOP, opcodes.EQ, opcodes.LT, opcodes.LE
+            {:fallthrough, :destination} = jumps[instruction]
+
+            new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
+            new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
+          else
+            target = new_positions[old_instructions[old_positions[instruction] + 1]] -- can use jumps...
+
+            if instruction.preserve and instruction.preserve ~= true 
+              new_instructions[i + 1] = instruction.preserve
+              new_instructions[i + 2].Bx = ZERO + (target - (i + 2))
+            else
+              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+              new_instructions[i + 2].Bx = ZERO 
 
     new_instructions[0].Bx = ZERO + new_positions[old_instructions[1]] - 1
 
@@ -121,6 +121,7 @@ obfuscate_proto = (proto, verbose) ->
       process_proto .p[i] for i = 0, .sizep - 1
       .sizelineinfo = 0
       .code = new_instructions
+      .sizecode = #.code + 1
 
   process_proto proto 
 

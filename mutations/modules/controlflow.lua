@@ -88,7 +88,7 @@ shuffle = function(array)
 end
 local add_jumps
 add_jumps = function(new_instructions, proto)
-  local replacement, i = { }, 1
+  local replacement, len = { }, #new_instructions
   for i = 1, #new_instructions do
     local instruction = new_instructions[i]
     if not instruction.preserve_next then
@@ -96,15 +96,14 @@ add_jumps = function(new_instructions, proto)
         table.insert(replacement, {
           OP = opcodes.JMP,
           A = 0,
-          Bx = ZERO + math.random(-i + 1, #new_instructions - i)
+          Bx = ZERO + math.random(-i + 1, len - i - 1)
         })
-        proto.sizecode = proto.sizecode + 1
       end
     end
     table.insert(replacement, instruction)
   end
-  for k, v in pairs(replacement) do
-    new_instructions[k] = v
+  for i, v in ipairs(replacement) do
+    new_instructions[i] = v
   end
 end
 local populate_translation_tables
@@ -117,27 +116,19 @@ local translate_instructions
 translate_instructions = function(args)
   local new_instructions, new_positions, old_positions, old_instructions, jumps
   new_instructions, new_positions, old_positions, old_instructions, jumps = args.new_instructions, args.new_positions, args.old_positions, args.old_instructions, args.jumps
-  for i = #new_instructions - 1, 0, -1 do
-    local _continue_0 = false
-    repeat
-      do
-        local instruction = new_instructions[i]
-        if (instruction.OP == opcodes.JMP) and (not jumps[instruction]) then
-          _continue_0 = true
-          break
-        end
+  local sizecode = #new_instructions
+  for i = sizecode - 1, 0, -1 do
+    do
+      local instruction = new_instructions[i]
+      if not ((instruction.OP == opcodes.JMP) and (not jumps[instruction])) then
         local _exp_0 = instruction.OP
         if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
           instruction.Bx = ZERO
-          local _exp_1 = instruction.OP
-          if opcodes.FORLOOP == _exp_1 or opcodes.FORPREP == _exp_1 then
-            local target = new_positions[old_instructions[old_positions[instruction] + 1]]
+          local target = new_positions[jumps[instruction]]
+          if instruction.OP ~= opcodes.JMP then
             instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
-            new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-          elseif opcodes.JMP == _exp_1 then
-            local target = new_positions[jumps[instruction]]
-            new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
           end
+          new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
         elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 or opcodes.TFORLOOP == _exp_0 or opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
           local fallthrough, destination
           do
@@ -157,12 +148,8 @@ translate_instructions = function(args)
           end
         end
       end
-      new_instructions[0].Bx = ZERO + new_positions[old_instructions[1]] - 1
-      _continue_0 = true
-    until true
-    if not _continue_0 then
-      break
     end
+    new_instructions[0].Bx = ZERO + new_positions[old_instructions[1]] - 1
   end
 end
 local obfuscate_proto
@@ -214,6 +201,7 @@ obfuscate_proto = function(proto, verbose)
       end
       p.sizelineinfo = 0
       p.code = new_instructions
+      p.sizecode = #p.code + 1
       return p
     end
   end
