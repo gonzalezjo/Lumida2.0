@@ -1,12 +1,9 @@
-local opcodes = require('lib.opcodes')
-local table_print = require('lib/table_print')
+local ZERO, opcodes = 131071, require('lib.opcodes')
 local shift_down_array
 shift_down_array = function(array)
-  local _tbl_0 = { }
-  for k, v in ipairs(array) do
-    _tbl_0[k - 1] = v
+  for i = 1, #array + 1 do
+    array[i - 1] = array[i]
   end
-  return _tbl_0
 end
 local repetitions
 repetitions = function(x, scalar)
@@ -28,9 +25,148 @@ get_jumps = function(min, max, scalar, x)
   end
   return math.min(math.max(min, repetitions(x, 50)), max)
 end
+local populate_metadata
+populate_metadata = function(old_instructions, old_positions, jumps)
+  for i, instruction in ipairs(old_instructions) do
+    old_positions[instruction] = i
+    local _exp_0 = instruction.OP
+    if opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
+      jumps[instruction] = {
+        destination = old_instructions[(i + 2) + (old_instructions[i + 1].Bx - ZERO)],
+        fallthrough = old_instructions[(i + 2)]
+      }
+    elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 or opcodes.TFORLOOP == _exp_0 then
+      jumps[instruction] = {
+        destination = old_instructions[(i + 2) + (old_instructions[i + 1].Bx - ZERO)],
+        fallthrough = old_instructions[(i + 2)]
+      }
+    elseif opcodes.JMP == _exp_0 or opcodes.FORPREP == _exp_0 or opcodes.FORLOOP == _exp_0 then
+      jumps[instruction] = old_instructions[(i + 1) + (instruction.Bx - ZERO)]
+    elseif opcodes.CLOSURE == _exp_0 then
+      instruction.preserve = true
+      for j = i + 1, #old_instructions do
+        local _exp_1 = old_instructions[i]
+        if opcodes.GETUPVAL == _exp_1 or opcodes.MOVE == _exp_1 or opcodes.ADD == _exp_1 or opcodes.SUB == _exp_1 or opcodes.MUL == _exp_1 or opcodes.DIV == _exp_1 then
+          old_instructions[i].preserve = 1
+        else
+          old_instructions[i - 1].preserve = false
+          break
+        end
+      end
+    elseif opcodes.CALL == _exp_0 or opcodes.TAILCALL == _exp_0 or opcodes.VARARG == _exp_0 or opcodes.LOADBOOL == _exp_0 or opcodes.SETLIST == _exp_0 then
+      if instruction.C == 0 then
+        do
+          local succ = old_instructions[i + 1]
+          instruction.preserve = succ
+          succ.preserve = true
+        end
+      end
+    end
+  end
+end
+local shuffle
+shuffle = function(array)
+  do
+    local a = array
+    for i = #a - 1, 1, -1 do
+      local _continue_0 = false
+      repeat
+        local j = math.random(i)
+        if a[i].preserve or a[j].preserve then
+          _continue_0 = true
+          break
+        end
+        a[i], a[j] = a[j], a[i]
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    return a
+  end
+end
+local add_jumps
+add_jumps = function(new_instructions, proto)
+  local replacement, i = { }, 1
+  for i = 1, #new_instructions do
+    local instruction = new_instructions[i]
+    if not instruction.preserve_next then
+      for _ = 1, get_jumps() do
+        table.insert(replacement, {
+          OP = opcodes.JMP,
+          A = 0,
+          Bx = ZERO + math.random(-i + 1, #new_instructions - i)
+        })
+        proto.sizecode = proto.sizecode + 1
+      end
+    end
+    table.insert(replacement, instruction)
+  end
+  for k, v in pairs(replacement) do
+    new_instructions[k] = v
+  end
+end
+local populate_translation_tables
+populate_translation_tables = function(new_instructions, new_positions)
+  for i, instruction in pairs(new_instructions) do
+    new_positions[instruction], new_positions[i] = i, instruction
+  end
+end
+local translate_instructions
+translate_instructions = function(args)
+  local new_instructions, new_positions, old_positions, old_instructions, jumps
+  new_instructions, new_positions, old_positions, old_instructions, jumps = args.new_instructions, args.new_positions, args.old_positions, args.old_instructions, args.jumps
+  for i = #new_instructions - 1, 0, -1 do
+    local _continue_0 = false
+    repeat
+      do
+        local instruction = new_instructions[i]
+        if (instruction.OP == opcodes.JMP) and (not jumps[instruction]) then
+          _continue_0 = true
+          break
+        end
+        local _exp_0 = instruction.OP
+        if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
+          instruction.Bx = ZERO
+          local _exp_1 = instruction.OP
+          if opcodes.FORLOOP == _exp_1 or opcodes.FORPREP == _exp_1 then
+            local target = new_positions[old_instructions[old_positions[instruction] + 1]]
+            instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
+            new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+          elseif opcodes.JMP == _exp_1 then
+            local target = new_positions[jumps[instruction]]
+            new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+          end
+        elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 or opcodes.TFORLOOP == _exp_0 or opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
+          local fallthrough, destination
+          do
+            local _obj_0 = jumps[instruction]
+            fallthrough, destination = _obj_0.fallthrough, _obj_0.destination
+          end
+          new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
+          new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
+        else
+          local target = new_positions[old_instructions[old_positions[instruction] + 1]]
+          if instruction.preserve and instruction.preserve ~= true then
+            new_instructions[i + 1] = instruction.preserve
+            new_instructions[i + 2].Bx = ZERO + (target - (i + 2))
+          else
+            new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
+            new_instructions[i + 2].Bx = ZERO
+          end
+        end
+      end
+      new_instructions[0].Bx = ZERO + new_positions[old_instructions[1]] - 1
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
+  end
+end
 local obfuscate_proto
 obfuscate_proto = function(proto, verbose)
-  local ZERO = 131071
   if verbose then
     print('Beginning control flow obfuscation...')
   end
@@ -39,7 +175,7 @@ obfuscate_proto = function(proto, verbose)
     if verbose then
       print('In process_proto')
     end
-    local jumps, closures, old_positions, new_positions = { }, { }, { }, { }
+    local jumps, old_positions, new_positions = { }, { }, { }
     local old_instructions
     do
       local _tbl_0 = { }
@@ -59,123 +195,18 @@ obfuscate_proto = function(proto, verbose)
       end
       new_instructions = _accum_0
     end
-    for i, instruction in ipairs(old_instructions) do
-      old_positions[instruction] = i
-      local _exp_0 = instruction.OP
-      if opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
-        jumps[instruction] = {
-          destination = old_instructions[(i + 2) + (old_instructions[i + 1].Bx - ZERO)],
-          fallthrough = old_instructions[(i + 2)]
-        }
-      elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 or opcodes.TFORLOOP == _exp_0 then
-        jumps[instruction] = {
-          destination = old_instructions[(i + 2) + (old_instructions[i + 1].Bx - ZERO)],
-          fallthrough = old_instructions[(i + 2)]
-        }
-      elseif opcodes.JMP == _exp_0 or opcodes.FORPREP == _exp_0 or opcodes.FORLOOP == _exp_0 then
-        jumps[instruction] = old_instructions[(i + 1) + (instruction.Bx - ZERO)]
-      elseif opcodes.CLOSURE == _exp_0 then
-        instruction.preserve = true
-        for j = i + 1, #old_instructions do
-          local _exp_1 = old_instructions[i]
-          if opcodes.GETUPVAL == _exp_1 or opcodes.MOVE == _exp_1 or opcodes.ADD == _exp_1 or opcodes.SUB == _exp_1 or opcodes.MUL == _exp_1 or opcodes.DIV == _exp_1 then
-            old_instructions[i].preserve = 1
-          else
-            old_instructions[i - 1].preserve = false
-            break
-          end
-        end
-      elseif opcodes.CALL == _exp_0 or opcodes.TAILCALL == _exp_0 or opcodes.VARARG == _exp_0 or opcodes.LOADBOOL == _exp_0 or opcodes.SETLIST == _exp_0 then
-        if instruction.C == 0 then
-          do
-            local succ = old_instructions[i + 1]
-            instruction.preserve = succ
-            succ.preserve = true
-          end
-        end
-      end
-    end
-    do
-      local a = new_instructions
-      for i = #a - 1, 1, -1 do
-        local _continue_0 = false
-        repeat
-          local j = math.random(i)
-          if a[i].preserve or a[j].preserve then
-            _continue_0 = true
-            break
-          end
-          a[i], a[j] = a[j], a[i]
-          _continue_0 = true
-        until true
-        if not _continue_0 then
-          break
-        end
-      end
-    end
-    for i = #new_instructions, 1, -1 do
-      if not new_instructions[i].preserve_next then
-        for _ = 1, get_jumps() do
-          proto.sizecode = proto.sizecode + 1
-          table.insert(new_instructions, i, {
-            OP = opcodes.JMP,
-            A = 0,
-            Bx = ZERO + math.random(-i + 1, #new_instructions - i)
-          })
-        end
-      end
-    end
-    new_instructions = shift_down_array(new_instructions)
-    for i, instruction in pairs(new_instructions) do
-      new_positions[instruction], new_positions[i] = i, instruction
-    end
-    for i = #new_instructions - 1, 0, -1 do
-      local _continue_0 = false
-      repeat
-        do
-          local instruction = new_instructions[i]
-          if (instruction.OP == opcodes.JMP) and (not jumps[instruction]) then
-            _continue_0 = true
-            break
-          end
-          local _exp_0 = instruction.OP
-          if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
-            instruction.Bx = ZERO
-            local _exp_1 = instruction.OP
-            if opcodes.FORLOOP == _exp_1 or opcodes.FORPREP == _exp_1 then
-              local target = new_positions[old_instructions[old_positions[instruction] + 1]]
-              instruction.Bx = ZERO + new_positions[jumps[instruction]] - (i + 1)
-              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-            elseif opcodes.JMP == _exp_1 then
-              local target = new_positions[jumps[instruction]]
-              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-            end
-          elseif opcodes.TEST == _exp_0 or opcodes.TESTSET == _exp_0 or opcodes.TFORLOOP == _exp_0 or opcodes.EQ == _exp_0 or opcodes.LT == _exp_0 or opcodes.LE == _exp_0 then
-            local fallthrough, destination
-            do
-              local _obj_0 = jumps[instruction]
-              fallthrough, destination = _obj_0.fallthrough, _obj_0.destination
-            end
-            new_instructions[i + 1].Bx = ZERO + new_positions[destination] - (i + 2)
-            new_instructions[i + 2].Bx = ZERO + new_positions[fallthrough] - (i + 3)
-          else
-            local target = new_positions[old_instructions[old_positions[instruction] + 1]]
-            if instruction.preserve and instruction.preserve ~= true then
-              new_instructions[i + 1] = instruction.preserve
-              new_instructions[i + 2].Bx = ZERO + (target - (i + 2))
-            else
-              new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
-              new_instructions[i + 2].Bx = ZERO
-            end
-          end
-        end
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
-    end
-    new_instructions[0].Bx = ZERO + new_positions[old_instructions[1]] - 1
+    populate_metadata(old_instructions, old_positions, jumps)
+    shuffle(new_instructions)
+    add_jumps(new_instructions, proto)
+    shift_down_array(new_instructions)
+    populate_translation_tables(new_instructions, new_positions)
+    translate_instructions({
+      new_instructions = new_instructions,
+      new_positions = new_positions,
+      old_positions = old_positions,
+      old_instructions = old_instructions,
+      jumps = jumps
+    })
     do
       local p = proto
       for i = 0, p.sizep - 1 do
