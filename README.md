@@ -21,16 +21,25 @@ A Lua 5.1 obfuscator that focuses on a combination of low-level, bytecode-based 
 * (WIP) OP_JMP -> OP_FORPREP conversion
 
 
-## Source Code Transformations 
+### Source Code Transformations
 
 
-* Constant pooling 
+* Constant pooling
 
 
 * String encryption
 
 
-* Dot syntax rewriting 
+* Dot-syntax rewriting
 
 
 * (WIP) Numeral obfuscation
+
+
+### Miscellaneous
+
+
+* ROBLOX Support
+
+
+* Bytecode analysis tooling
