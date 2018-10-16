@@ -5,3 +5,6 @@ lua5.1.exe
 out.luac
 lmprof.so
 unluac_2015_06_13.jar
+clua
+cluac
+lmprof_logs.lua
