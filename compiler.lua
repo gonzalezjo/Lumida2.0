@@ -902,7 +902,7 @@ do
 		local c1 = I % 256
 		I = i.B * 128 + (I - c1) / 256  -- 7 bits of C left
 		local c2 = I % 256
-		local c3 = (I - c2) / 256
+		local c3 = (I - c2) / 256 -- Appears to be a bug here
 		return string.char(c0, c1, c2, c3)
 	end
 

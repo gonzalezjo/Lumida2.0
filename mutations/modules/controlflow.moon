@@ -30,15 +30,15 @@ populate_metadata = (old_instructions, old_positions, jumps) ->
                 break
       when opcodes.CALL, opcodes.TAILCALL, opcodes.VARARG, opcodes.LOADBOOL, opcodes.SETLIST
         if instruction.C == 0 
-          with succ = old_instructions[i + 1] -- successor.
-            .setlist_casted, .preserve = (instruction.OP == opcodes.SETLIST), true
-            instruction.preserve, instruction.setlist_next = succ, true
+          with succ = old_instructions[i + 1]
+            instruction.preserve = succ
+            succ.preserve = true
 
 shuffle = (array) -> 
   with a = array
     for i = #a - 1, 1, -1   
       j = math.random i
-      continue if a[i].preserve or a[j].preserve
+      continue if a[i].preserve or a[j].preserve 
       a[i], a[j] = a[j], a[i]
 
 add_jumps = (new_instructions, proto) ->
@@ -47,7 +47,7 @@ add_jumps = (new_instructions, proto) ->
   for i = 1, #new_instructions
     instruction = new_instructions[i]
 
-    if not instruction.preserve_next -- unnecessary?
+    if not instruction.preserve_next
       for _ = 1, get_jumps!
         table.insert replacement, 
           OP: opcodes.JMP
@@ -70,7 +70,7 @@ translate_instructions = (args) ->
 
   for i = sizecode - 1, 0, -1 
     with instruction = new_instructions[i]
-      unless instruction.setlist_casted or ((instruction.OP == opcodes.JMP) and (not jumps[instruction])) -- skip jumps that weren't generated
+      unless (instruction.OP == opcodes.JMP) and (not jumps[instruction]) -- skip jumps that weren't generated
         switch instruction.OP
           when opcodes.JMP, opcodes.FORLOOP, opcodes.FORPREP 
             instruction.Bx = ZERO
@@ -94,9 +94,6 @@ translate_instructions = (args) ->
             else
               new_instructions[i + 1].Bx = ZERO + (target - (i + 2))
               new_instructions[i + 2].Bx = ZERO 
-
-      if instruction.preserve and instruction.setlist_next
-        new_instructions[i + 1] = instruction.preserve
 
     new_instructions[0].Bx = ZERO + new_positions[old_instructions[1]] - 1
 
