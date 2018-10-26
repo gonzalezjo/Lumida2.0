@@ -38,7 +38,7 @@ local function Format_Beautify(code, verbose)
 
   end
 
-  for i = 1, 10 do 
+  for i = 1, 1000 do 
     add_to_alphabet()
   end
 

@@ -873,7 +873,7 @@ do
 	end
 
 	function luaP:CREATE_ABx(o,a,bc)
-		return {OP = self.OpCode[o], A = a, Bx = bc}
+		return {OP = self.OpCode[o] or o, A = a, Bx = bc}
 	end
 
 	------------------------------------------------------------------------
