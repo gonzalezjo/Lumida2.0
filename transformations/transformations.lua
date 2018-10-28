@@ -3,7 +3,7 @@ local transformations = {
   numbers = assert(require 'transformations/modules/numbers'), 
   strings = assert(require 'transformations/modules/strings'),
   pooling = assert(require 'transformations/modules/pooling'),
-  nodotsyntax = assert(require 'transformations/modules/nodotsyntax')
+  improveparsability = assert(require 'transformations/modules/improveparsability')
 } 
 
 return transformations

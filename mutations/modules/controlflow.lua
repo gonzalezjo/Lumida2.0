@@ -57,8 +57,8 @@ populate_metadata = function(old_instructions, old_positions, jumps)
       if instruction.C == 0 then
         do
           local succ = old_instructions[i + 1]
-          instruction.preserve = succ
-          succ.preserve = true
+          succ.setlist_casted, succ.preserve = (instruction.OP == opcodes.SETLIST), true
+          instruction.preserve, instruction.setlist_next = succ, true
         end
       end
     end
@@ -120,7 +120,7 @@ translate_instructions = function(args)
   for i = sizecode - 1, 0, -1 do
     do
       local instruction = new_instructions[i]
-      if not ((instruction.OP == opcodes.JMP) and (not jumps[instruction])) then
+      if not (instruction.setlist_casted or ((instruction.OP == opcodes.JMP) and (not jumps[instruction]))) then
         local _exp_0 = instruction.OP
         if opcodes.JMP == _exp_0 or opcodes.FORLOOP == _exp_0 or opcodes.FORPREP == _exp_0 then
           instruction.Bx = ZERO
@@ -147,6 +147,9 @@ translate_instructions = function(args)
             new_instructions[i + 2].Bx = ZERO
           end
         end
+      end
+      if instruction.preserve and instruction.setlist_next then
+        new_instructions[i + 1] = instruction.preserve
       end
     end
     new_instructions[0].Bx = ZERO + new_positions[old_instructions[1]] - 1

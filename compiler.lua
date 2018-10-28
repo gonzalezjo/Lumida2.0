@@ -890,21 +890,25 @@ do
 	------------------------------------------------------------------------
 	-- returns a 4-char string little-endian encoded form of an instruction
 	------------------------------------------------------------------------
-	function luaP:Instruction(i)
-		if i.Bx then
-			-- change to OP/A/B/C format
-			i.C = i.Bx % 512
-			i.B = (i.Bx - i.C) / 512
-		end
-		local I = i.A * 64 + i.OP
-		local c0 = I % 256
-		I = i.C * 64 + (I - c0) / 256  -- 6 bits of A left
-		local c1 = I % 256
-		I = i.B * 128 + (I - c1) / 256  -- 7 bits of C left
-		local c2 = I % 256
-		local c3 = (I - c2) / 256 -- Appears to be a bug here
-		return string.char(c0, c1, c2, c3)
-	end
+	do    
+		local p2 = {1,2,4,8,16,32,64,128,256, 512, 1024, 2048, 4096}
+		local function keep (x, n) return x % p2[n+1] end
+		local function srb (x,n) return math.floor (x / p2[n+1]) end
+		local function slb (x,n) return x * p2[n+1] end
+
+	   ------------------------------------------------------------------------
+	   -- Return a 4-char string little-endian encoded form of an instruction
+	   ------------------------------------------------------------------------
+	   function luaP:Instruction(i)
+	      local c0, c1, c2, c3
+	      if i.Bx then i.C = keep (i.Bx, 9); i.B = srb (i.Bx, 9) end
+	      c0 = i.OP + slb (keep (i.A, 2), 6) 
+	      c1 = srb (i.A, 2) + slb (keep (i.C, 2), 6)
+	      c2 = srb (i.C, 2) + slb (keep (i.B, 1), 7)
+	      c3 = srb (i.B, 1)
+	      return string.char(c0, c1, c2, c3)
+	   end
+	 end
 
 	------------------------------------------------------------------------
 	-- decodes a 4-char little-endian string into an instruction struct
