@@ -48,7 +48,7 @@ local function Format_Beautify(code, verbose)
   end
 
   local function obfuscated_string(str) -- takes a .Data
-    local decoded = loadstring('return ' .. str)()
+    local decoded = setfenv(loadstring('return ' .. str), {})()
     encoded = {}
 
     for i = 1, #decoded do 
