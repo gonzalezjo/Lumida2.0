@@ -33,6 +33,9 @@ A Lua 5.1 obfuscator that focuses on a combination of low-level, bytecode-based 
 * Dot-syntax rewriting
 
 
+* String-call syntax rewriting
+
+
 * (WIP) Numeral obfuscation
 
 
