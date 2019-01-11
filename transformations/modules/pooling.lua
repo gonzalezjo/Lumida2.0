@@ -26,7 +26,7 @@ end
 
 local LENGTH_OF_LETTERS = #acceptable_letters
 
-local function make_acceptable_names() 
+local function make_acceptable_names()
   if #acceptable_names ~= 0 then 
     -- lazy loading
     return 
@@ -52,11 +52,19 @@ local function make_acceptable_names()
 end
 
 local formatStatlist
-return function(code, ast)  
+return function(code, ast) 
   make_acceptable_names()
 
-  local function getRandomName()
+  --[[local function getRandomName()
     return table.remove(acceptable_names, math.random(#acceptable_names))
+  end]]
+  local amount_of_names = #acceptable_names
+  local function getRandomName()
+    local i = math.random(amount_of_names)
+    local name = acceptable_names[i]
+    acceptable_names[i], acceptable_names[amount_of_names] = acceptable_names[amount_of_names]
+    amount_of_names = amount_of_names - 1
+    return name
   end
 
   if type(code) == "string" then
@@ -100,6 +108,7 @@ return function(code, ast)
   local CONSTANT_POOL = {}
   local nilIndex
   local index = getRandomName()
+
   local function insertConstant(v, index, type)
     table.insert(
       constantPoolAstNode.EntryList,
@@ -116,7 +125,7 @@ return function(code, ast)
     if math.random() < .08 then -- bor
       if math.random() < .25 then 
         addConstant(math.random())
-      elseif math.random(.75) then
+      elseif math.random() < .75 then
         addConstant(math.random(90000000))
       else
         addConstant(math.random(-100000000, 100000000))
@@ -310,5 +319,8 @@ return function(code, ast)
 
   fixStatList(ast)
 
-  return format_beautify(ast)
+  local ret = format_beautify(ast)
+
+  --print(ret)
+  return ret
 end

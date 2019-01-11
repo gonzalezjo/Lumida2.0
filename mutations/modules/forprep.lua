@@ -26,25 +26,25 @@ local function obfuscate_proto(pr)
       end
 
       p.sizek = p.sizek + 1
-      p.maxstacksize = p.maxstacksize + 3
+      p.maxstacksize = p.maxstacksize + 4
 
       table.insert(p.code, 0, {
         OP = 1,
         A = p.maxstacksize - 3,
         Bx = p.sizek - 1
-        })
+      })
 
       table.insert(p.code, 1, {
         OP = 1,
         A = p.maxstacksize - 2,
         Bx = p.sizek - 1
-        })
+       })
 
       table.insert(p.code, 2, {
         OP = 1,
         A = p.maxstacksize - 1,
         Bx = p.sizek - 1
-        })
+      })
 
       p.sizecode = p.sizecode + 3
 
@@ -77,8 +77,8 @@ local function obfuscate_proto(pr)
 
     p.lineinfo = new_lineinfo
 
-    for i = 0, p.sizep - 1 do
-      process_proto(p.p[i])
+    for i = 1, p.sizep do
+      process_proto(p.p[i - 1])
     end
   end
 
@@ -91,7 +91,7 @@ return function(proto, verbose)
   obfuscate_proto(proto)
 
   if verbose then 
-    table_print(proto)
+    --table_print(proto)
   end
 
   return proto

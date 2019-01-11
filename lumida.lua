@@ -1,8 +1,48 @@
 math.randomseed(os.time() + os.clock())
 
 local DEBUG_CODE = [[
+  print("a")
   print'a'
 ]]
+
+local ffi = require'ffi'
+
+ffi.cdef[[
+
+  struct RetStruct { 
+    int success;  
+    size_t len;
+    char str[0];
+  };
+
+  int ValidateBytecode(const char* s, unsigned int l);
+  struct RetStruct* CompileToBytecode(const char* s, unsigned int l);
+  void free(void *ptr);
+
+]]
+
+local LumidaCompiler = ffi.load("C:\\Users\\slapzor\\source\\repos\\LumidaCompiler\\Release\\LumidaCompiler.dll")
+local bytecode_parser = require'bytecode_parser'
+
+local function compile_source(src)
+  local retstruct = LumidaCompiler.CompileToBytecode(DEBUG_CODE, #DEBUG_CODE)
+  local bc = ffi.string(ffi.cast("void*", retstruct.str), retstruct.len)
+  local chunk = bytecode_parser.decode_chunk(bc)
+  ffi.C.free(retstruct)
+  return chunk
+end
+
+--print(compile_source(DEBUG_CODE))
+
+--[[local retstruct = LumidaCompiler.CompileToBytecode(DEBUG_CODE, #DEBUG_CODE)
+local bc = ffi.string(ffi.cast("void*", retstruct.str), retstruct.len)
+
+
+local chunk = bytecode_parser.decode_chunk(bc)
+table.foreach(chunk, print)
+print'-----------------']]
+
+--print("test:", LumidaCompiler.ValidateBytecode(bc, #bc + 1));
 
 local obfuscators = {}
 do 
@@ -32,7 +72,7 @@ do
 
   arguments = parser:parse()
   _G.regular_lua = not arguments.roblox -- globals :\\\\/\/\/\//\/
-  arguments.skip_validation = arguments.skip_validation or (not _G.regular_lua or not _VERSION:match 'Lua 5.1' or jit) 
+  --arguments.skip_validation = arguments.skip_validation or (not _G.regular_lua or not _VERSION:match 'Lua 5.1' or jit) 
 
   if arguments.verbose then 
     _G.VERBOSE_COMPILATION = true
@@ -90,7 +130,8 @@ do
 
     local compiler 
     compiler = require 'compiler'
-    source = compiler.compile_to_proto(source, '=lumida')
+    source = compile_source(source)--compiler.compile_to_proto(source, '=lumida')
+    table.foreach(source, print)
 
     for _, v in ipairs(arguments.mutations) do 
       assert(obfuscators.bytecode[v], 'No bytecode mutator: ' .. v)
@@ -105,13 +146,16 @@ do
     source = assert(compiler.compile_proto(source), 'Failed to compile proto.')
 
     if not arguments.skip_validation then
-      assert(loadstring(source), 'Invalid bytecode transformations.')
+      assert(LumidaCompiler.ValidateBytecode(source, #source) == 1, 'Invalid bytecode transformations.')
     end
 
     if arguments.pretty_bytecode then 
       local dump = {
-        source:byte(1, 2 ^ 31 - 1) -- please do not write 9e9 + 1 instructions worth of code. 
+        --source:byte(1, 2 ^ 30) -- please do not write 9e9 + 1 instructions worth of code. 
       }
+      for i=1,#source do
+        dump[#dump + 1] = source:byte(i,i)
+      end
 
       local s = 'loadstring(\'\\' .. table.concat(dump, '\\') .. '\')()'
       print(s)
@@ -126,7 +170,7 @@ do
   f:write(source)
   f:close()
 
-  if arguments.verbose then 
+  if arguments.verbose and source:byte(1) ~= 27 then 
     print(
       '\n------------------\nOutput: \n------------------\n\n' 
       .. tostring(source) .. 
